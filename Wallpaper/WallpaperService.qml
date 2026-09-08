@@ -9,7 +9,10 @@ Singleton {
 
   property list<string> wallpapers: []
   property string currentWallpaper: ""
-  property string backend: "awww"
+  readonly property string backend: "hyprpaper"
+  property string pendingWallpaper: ""
+  property int restoreAttempts: 0
+  property string applyError: ""
 
   // Scan wallpaper directories
   Process {
@@ -38,9 +41,12 @@ Singleton {
       if (error !== FileViewError.FileNotFound)
         console.warn("Cannot read wallpaper configuration:", FileViewError.toString(error));
     }
-    onTextChanged: {
+    onLoaded: {
       const saved = configFile.text().trim();
-      if (saved !== "") root.currentWallpaper = saved;
+      if (saved !== "") {
+        root.pendingWallpaper = saved;
+        restoreTimer.start();
+      }
     }
   }
 
@@ -53,28 +59,60 @@ Singleton {
     scanner.running = true;
   }
 
-  function setWallpaper(path) {
-    currentWallpaper = path;
-
-    setProcess.command = ["awww", "img", path,
-      "--transition-type", "grow", "--transition-pos", "center",
-      "--transition-duration", "1"];
+  function setWallpaper(path, restoring = false) {
+    if (setProcess.running || saveProcess.running || path === "") return;
+    restoreTimer.stop();
+    if (!restoring) restoreAttempts = 0;
+    pendingWallpaper = path;
+    applyError = "";
+    setProcess.command = ["hyprctl", "hyprpaper", "wallpaper", "," + path];
     setProcess.running = true;
+  }
 
-    // Save to config
-    saveProcess.command = ["sh", "-c", 'printf "%s" "$1" > "$HOME/.config/quickshell/wallpaper.conf"', "sh", path];
-    saveProcess.running = true;
+  // Hyprpaper may start after Quickshell during session startup.
+  Timer {
+    id: restoreTimer
+    interval: 1000
+    onTriggered: {
+      root.restoreAttempts++;
+      root.setWallpaper(root.pendingWallpaper, true);
+    }
   }
 
   Process {
     id: setProcess
     command: []
     running: false
+    stdout: SplitParser {
+      onRead: data => { root.applyError += data + "\n"; }
+    }
+    stderr: SplitParser {
+      onRead: data => { root.applyError += data + "\n"; }
+    }
+    onExited: (exitCode, exitStatus) => {
+      if (exitCode !== 0 || exitStatus !== 0) {
+        if (root.restoreAttempts > 0 && root.restoreAttempts < 10) {
+          restoreTimer.start();
+        } else {
+          console.warn("Hyprpaper could not apply wallpaper:", root.pendingWallpaper,
+            "exit code:", exitCode, root.applyError.trim());
+        }
+        return;
+      }
+      root.restoreAttempts = 0;
+      root.currentWallpaper = root.pendingWallpaper;
+      saveProcess.command = ["sh", "-c", 'mkdir -p "$HOME/.config/quickshell" && printf "%s" "$1" > "$HOME/.config/quickshell/wallpaper.conf"', "sh", root.currentWallpaper];
+      saveProcess.running = true;
+    }
   }
 
   Process {
     id: saveProcess
     command: []
     running: false
+    onExited: (exitCode, exitStatus) => {
+      if (exitCode !== 0 || exitStatus !== 0)
+        console.warn("Could not save wallpaper configuration");
+    }
   }
 }

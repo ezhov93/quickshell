@@ -1,248 +1,170 @@
-# my quickshell config
-a personal Hyprland desktop config built with [Quickshell](https://quickshell.outfoxxed.me/). status bar, app launcher, notification daemon, OSD, wallpaper manager, monitor manager, and caffeine toggle. each piece is its own module and works independently, so feel free to grab only the parts you need.
+# Конфигурация Quickshell для Hyprland
 
-i hope it's helpful as a starting point or reference. if you have questions or ide
+Личная конфигурация рабочего стола на [Quickshell](https://quickshell.outfoxxed.me/): панель, меню приложений, уведомления, индикаторы громкости и яркости, управление обоями и мониторами, а также режим отключения блокировки по бездействию.
 
-as, don't hesitate to open an issue - happy to chat.
+Модули можно использовать вместе или подключать по отдельности. Все они используют общую тему `DefaultTheme.qml`. Конфигурация подойдёт как готовый рабочий стол или отправная точка для собственной настройки. Вопросы и предложения можно оставлять в Issues репозитория.
 
-<img width="1920" height="111" alt="image" src="https://github.com/user-attachments/assets/06d824ae-cf21-4c78-919c-1604f1c0a2dc" />
-<br/>
-<img width="405" height="146" alt="image" src="https://github.com/user-attachments/assets/40c9b11a-abf2-4e9b-bf85-ec44ea67d69d" />
-<br/>
-<img width="601" height="495" alt="image" src="https://github.com/user-attachments/assets/40c46613-dc24-461a-9075-33ffea221716" />
+## Возможности
 
+| Модуль | Назначение |
+| --- | --- |
+| `Bar` | Рабочие пространства, заголовок активного окна, системный трей, медиа, громкость, яркость, CPU, температура, сеть, батарея, раскладка и часы |
+| `AppLauncher` | Поиск и запуск приложений в стиле `rofi drun` |
+| `Notifications` | Служба уведомлений с всплывающими карточками и режимом «Не беспокоить» |
+| `Osd` | Всплывающие индикаторы изменения громкости и яркости |
+| `Wallpaper` | Выбор обоев из сетки изображений, предпросмотр и применение через hyprpaper |
+| `MonitorManager` | Настройка расположения, разрешения, масштаба, поворота и дублирования экранов |
+| `IdleInhibitor` | Временное отключение блокировки и гашения экрана по бездействию |
 
-https://github.com/user-attachments/assets/55c47c05-34b6-402c-aea7-42a369b86828
+## Зависимости
 
+Для запуска нужны [Quickshell](https://quickshell.outfoxxed.me/), Qt 6, [Hyprland](https://hyprland.org/) с `hyprctl` и [Nerd Font](https://www.nerdfonts.com/). По умолчанию используется Hack Nerd Font.
 
-## what's included
+Дополнительные зависимости зависят от подключённых модулей:
 
-| Module | What it does |
-|--------|-------------|
-| **Bar** | clock, workspaces, active window title, volume, brightness, network, battery, system tray, now-playing indicator |
-| **App Launcher** | rofi drun-style application launcher |
-| **Notifications** | dunst-style notification daemon with popups |
-| **OSD** | on-screen display for volume and brightness changes, auto-hides |
-| **Wallpaper Manager** | grid picker for wallpapers, preview, supports hyprpaper and swww |
-| **Monitor Manager** | visual `hyprctl` front-end for arranging, scaling, rotating, mirroring, and disabling displays |
-| **Caffeine Toggle** | keeps the screen from locking or dimming while it's on - a corner badge you switch on for stretches where you're reading more than typing |
+| Зависимость | Для чего нужна |
+| --- | --- |
+| PipeWire | Громкость в панели и OSD |
+| `brightnessctl` | Чтение и изменение яркости в панели и OSD |
+| `nmcli` | Название Wi-Fi-сети в панели |
+| `ip` из iproute2 | Определение подключений, которыми не управляет NetworkManager |
+| `nmtui` и терминал | Настройки сети по нажатию на индикатор панели |
+| `top`, `free` | Сбор статистики CPU и памяти |
+| `hyprpaper` 0.8+ | Применение обоев |
+| `python3` | Сохранение конфигурации мониторов |
 
-## prerequisites
+Данные батареи читаются из `/sys/class/power_supply/`, температура — из доступных датчиков в `/sys`. Отдельные программы для них не нужны.
 
-these are needed regardless of which modules you use:
-
-- [Quickshell](https://quickshell.outfoxxed.me/) + Qt 6
-- [Hyprland](https://hyprland.org/)
-- a [Nerd Font](https://www.nerdfonts.com/) (i use Hack Nerd Font - swap it in the QML files if you prefer another)
-
-optional, depending on which modules you use:
-
-- `brightnessctl` - for brightness display and control in the bar and OSD
-- `nmcli` - for Wi-Fi names in the bar; `ip` (iproute2) detects connections not managed by NetworkManager
-- `/sys/class/power_supply/` - for battery info (standard on most laptops)
-- `hyprpaper` or `swww` - for the wallpaper manager
-- `hyprctl` / Hyprland - for the monitor manager
-
-## installing everything
-
-if you'd like the full setup:
+## Установка и запуск
 
 ```bash
 git clone https://github.com/ezhov93/quickshell.git
 cd quickshell
 ./install.sh
-quickshell -p ~/.config/quickshell
+quickshell -p "$HOME/.config/quickshell"
 ```
 
-Run `./install.sh` without sudo. It copies the QML files and shared theme into `~/.config/quickshell/`, backs up an existing configuration as `~/.config/quickshell.backup.*`, and reports missing dependencies. Install dependencies separately. The script does not start the shell or change Hyprland settings. Re-running it creates a fresh backup; running it from the installed directory is a no-op.
+Запускайте установщик без `sudo`. Он копирует QML-файлы и общую тему в `~/.config/quickshell/`, предварительно перемещая существующую конфигурацию в `~/.config/quickshell.backup.*`, и сообщает об отсутствии некоторых зависимостей. Зависимости нужно установить отдельно. Скрипт не запускает оболочку и не меняет настройки Hyprland.
 
-## installing individual modules
+Повторная установка создаёт новую резервную копию. При запуске из самого каталога установленной конфигурации скрипт ничего не меняет. Используйте путь `~/.config/quickshell/`: некоторые службы обращаются к нему напрямую.
 
-modules share the root `DefaultTheme.qml` singleton. To install individual modules, also copy `DefaultTheme.qml` into your quickshell config directory, next to `shell.qml`, and keep module folders directly beneath it. Here's how to set up the parts you want.
+Перед запуском модуля уведомлений остановите dunst, mako или другую службу уведомлений: имя `org.freedesktop.Notifications` в D-Bus может занимать только одна служба.
 
-### bar
+Для автоматического запуска добавьте в `hyprland.conf`:
 
-the status bar - clock, workspaces, window title, volume, brightness, network, battery, system tray, and a now-playing indicator.
-
-**extra dependencies:** `brightnessctl`, `nmcli`, `/sys/class/power_supply/`
-
-1. copy `Bar/` into your quickshell config directory
-2. in your `shell.qml`, add:
-
-```qml
-import "Bar"
-
-Bar {}
+```ini
+exec-once = quickshell -p ~/.config/quickshell
+# Нужно при использовании модуля обоев:
+exec-once = hyprpaper
 ```
 
-the bar will use its built-in Nordic colors by default. to supply custom colors, pass `theme: yourThemeObject`.
+## Горячие клавиши и IPC
 
-you can also toggle the bar via IPC:
-```
-qs ipc call bar toggle
-```
+Пример привязок для `hyprland.conf`:
 
-The right side shows the main keyboard's active layout (for example, `EN` or `RU`), updated on Hyprland layout changes. It requires `hyprctl` and follows the bar theme.
-
-Click the network indicator to open `nmtui` in the default terminal (`x-terminal-emulator`). Install `nmtui` and a terminal; override `Bar.networkSettingsCommand` if needed, for example `["kitty", "nmtui"]`.
-
-### app launcher
-
-a rofi drun-style launcher overlay. searches by name, description, keywords, and categories. keyboard navigation with arrow keys, enter, and escape.
-
-1. copy `AppLauncher/` into your quickshell config directory
-2. in your `shell.qml`, add:
-
-```qml
-import "AppLauncher"
-
-AppLauncher {}
-```
-
-3. bind a key in `hyprland.conf`:
-
-```
+```ini
 bind = SUPER, D, exec, qs ipc call launcher toggle
-```
-
-### notifications
-
-a built-in notification daemon - replaces dunst/mako. popups appear in the top-right corner with urgency-based styling and auto-expire timers.
-
-**note:** only one notification daemon can own `org.freedesktop.Notifications` on D-Bus at a time. please stop dunst/mako before using this.
-
-1. copy `Notifications/` into your quickshell config directory
-2. in your `shell.qml`, add:
-
-```qml
-import "Notifications"
-
-NotificationPopup {}
-```
-
-3. optionally bind IPC commands in `hyprland.conf`:
-
-```
-bind = SUPER, N, exec, qs ipc call notifications dismiss_all
-bind = SUPER SHIFT, N, exec, qs ipc call notifications dnd_toggle
-```
-
-features:
-- urgency-based accent colors (critical, normal, low)
-- app icons for common apps (discord, firefox, spotify, etc.)
-- action buttons from the notification
-- progress bar showing time until auto-dismiss
-- click to dismiss, close button per notification
-- max 5 visible notifications at a time
-- do not disturb mode
-
-### osd
-
-a vertical pill overlay that appears on the right side of the screen when volume or brightness changes, then auto-hides after 1.5 seconds.
-
-**extra dependencies:** `brightnessctl`
-
-1. copy `Osd/` into your quickshell config directory
-2. in your `shell.qml`, add:
-
-```qml
-import "Osd"
-
-OSD {}
-```
-
-no IPC needed - it reacts automatically to PipeWire volume changes and backlight changes.
-
-### wallpaper manager
-
-a grid-based wallpaper picker that scans `~/Pictures/Wallpapers` and `~/Pictures`. click to apply, right-click to preview. auto-detects swww or hyprpaper as backend. persists current wallpaper to `wallpaper.conf`.
-
-**extra dependencies:** `hyprpaper` or `swww`
-
-1. copy `Wallpaper/` into your quickshell config directory
-2. in your `shell.qml`, add:
-
-```qml
-import "Wallpaper"
-
-WallpaperManager {}
-```
-
-3. bind a key in `hyprland.conf`:
-
-```
 bind = SUPER, W, exec, qs ipc call wallpaper toggle
-```
-
-### monitor manager
-
-an ARandR-style visual monitor editor for Hyprland. it queries `hyprctl -j monitors all`, draws the current layout, and lets you adjust resolution, scale, rotation, position, mirroring, and enabled state before applying a batched `hyprctl keyword monitor ...` layout. persists across reboots to `~/.config/hypr/monitors.conf`.
-
-1. copy `MonitorManager/` into your quickshell config directory
-2. in your `shell.qml`, add:
-
-```qml
-import "MonitorManager"
-
-MonitorManager {}
-```
-
-3. bind a key in `hyprland.conf`:
-
-```
 bind = SUPER, O, exec, qs ipc call monitors toggle
 bind = SUPER SHIFT, O, exec, qs ipc call monitors refresh
-```
-
-4. add this line to your `hyprland.conf` so your layout is restored on login:
-
-```
-source = ~/.config/hypr/monitors.conf
-```
-
-features:
-- visual layout canvas with drag-to-arrange monitors
-- per-output resolution, scale, rotation, position, enable/disable, and mirror controls
-
-### caffeine toggle
-
-a small toggle that keeps the screen from locking or dimming while it's switched on. i added this for the stretches where i'm mostly reading rather than typing (vibe-coding?) - long enough that the lock screen would otherwise kick in when i'd rather it didn't. it shows up as a small badge in the corner only while it's active, so the rest of the time it's out of the way.
-
-no extra dependencies - it wraps Quickshell's own `IdleInhibitor` type, which talks directly to the Wayland `idle-inhibit` protocol Hyprland already supports. nothing external to install or accidentally leave running.
-
-1. copy `IdleInhibitor/` into your quickshell config directory
-2. in your `shell.qml`, add:
-
-```qml
-import "IdleInhibitor"
-
-CaffeineToggle {}
-```
-
-3. bind a key in `hyprland.conf`:
-
-```
+bind = SUPER, N, exec, qs ipc call notifications dismiss_all
+bind = SUPER SHIFT, N, exec, qs ipc call notifications dnd_toggle
 bind = SUPER, C, exec, qs ipc call idle toggle
 ```
 
-features:
-- corner badge that fades in only while active, and fades back out a couple seconds after you toggle it
-- click the badge to turn it off without reaching for the keybind
-- deliberately doesn't persist across restarts - i'd rather re-toggle it once in a while than have a shell crash quietly leave the screen from sleeping forever
+Эти команды работают и из терминала при запущенной конфигурации. Команда `qs ipc call bar toggle` скрывает или показывает панель. Для управления режимом бездействия также доступны `qs ipc call idle enable` и `qs ipc call idle disable`.
 
-## tweaking
+## Подключение отдельных модулей
 
-- **colors** - edit the root `DefaultTheme.qml` to update all modules, or pass a custom theme object to its entry component.
-- **font** - edit the default `font: "Your Font"` at the top of the entry file.
-- **layout** - rearrange widgets in `Bar/Bar.qml`.
-- **polling rate** - change the interval in `Bar/SystemInfo.qml` (default 2s).
-- **extra bar widgets** - CPU, memory, and temperature widgets are already written in `Bar/Bar.qml` but commented out. uncomment them if you'd like them back (requires `top` and `free`; CPU temperature is read directly from `/sys`).
-- **adding a module** - create a folder with an entry QML file, add `import ".." as Shared` and `property var theme: Shared.DefaultTheme`, and wire it in `shell.qml`.
+Скопируйте нужные каталоги модулей и `DefaultTheme.qml` в `~/.config/quickshell/`. Файл темы должен лежать рядом с `shell.qml`, а каталоги модулей — непосредственно под ним.
 
-## acknowledgments
+Минимальный `shell.qml` с панелью и меню приложений:
 
-this wouldn't exist without the wonderful work behind [Quickshell](https://quickshell.outfoxxed.me/), [Hyprland](https://hyprland.org/), and the theme creators:
+```qml
+import Quickshell
+import "Bar"
+import "AppLauncher"
 
-- [Nordic GTK](https://github.com/EliverLara/Nordic) by EliverLara and the [Nord palette](https://www.nordtheme.com/) - the built-in module colors
+Scope {
+    Bar {}
+    AppLauncher {}
+}
+```
 
-thank you all.
+Для остальных модулей добавьте соответствующий импорт и компонент внутри `Scope`:
+
+| Каталог и импорт | Компонент |
+| --- | --- |
+| `Bar` | `Bar {}` |
+| `AppLauncher` | `AppLauncher {}` |
+| `Notifications` | `NotificationPopup {}` |
+| `Osd` | `OSD {}` |
+| `Wallpaper` | `WallpaperManager {}` |
+| `MonitorManager` | `MonitorManager {}` |
+| `IdleInhibitor` | `CaffeineToggle {}` |
+
+## Работа с модулями
+
+### Панель
+
+Элементы расположены в стиле macOS: слева — рабочие пространства и активное окно; справа — трей, медиа, громкость, яркость, CPU, температура, сеть, батарея, раскладка клавиатуры и дата со временем.
+
+Индикатор раскладки показывает язык основной клавиатуры, например `EN` или `RU`, и обновляется при событиях Hyprland через `hyprctl`.
+
+Нажатие на индикатор сети открывает `nmtui` через `x-terminal-emulator`. Команду можно заменить при подключении панели:
+
+```qml
+Bar {
+    networkSettingsCommand: ["kitty", "nmtui"]
+}
+```
+
+### Меню приложений
+
+Поиск работает по названию, описанию, ключевым словам и категориям приложения. Для навигации используйте стрелки, для запуска — Enter, для закрытия — Escape.
+
+### Уведомления
+
+Карточки появляются в правом верхнем углу. Поддерживаются цвета по уровню важности, значки приложений, кнопки действий, автоматическое закрытие с индикатором оставшегося времени и режим «Не беспокоить». Одновременно отображается до пяти уведомлений. Карточку можно закрыть нажатием на неё или на кнопку закрытия.
+
+### Индикаторы громкости и яркости
+
+Вертикальный индикатор справа появляется при изменении громкости или яркости и скрывается через 1,5 секунды. OSD автоматически реагирует на изменения PipeWire и подсветки; команды IPC не нужны.
+
+### Обои
+
+Модуль ищет изображения в `~/Pictures/Wallpapers` и `~/Pictures`. Нажатие левой кнопкой применяет обои, правой — открывает предпросмотр. Для применения должен быть запущен hyprpaper 0.8+.
+
+Успешно применённые обои сохраняются в `~/.config/quickshell/wallpaper.conf` и восстанавливаются при следующем запуске.
+
+### Мониторы
+
+Визуальный редактор в стиле ARandR получает список экранов через `hyprctl -j monitors all`. Мониторы можно перетаскивать на схеме, менять разрешение, частоту обновления, масштаб, поворот и координаты, включать дублирование или отключать отдельные выходы. Изменения применяются через `hyprctl`.
+
+Модуль поддерживает сохранение в `~/.config/hypr/monitors.conf` или `~/.config/hypr/monitors.lua` в зависимости от формата конфигурации Hyprland. Чтобы сохранённая схема загружалась при входе, подключите соответствующий файл в основной конфигурации. Для `hyprland.conf`:
+
+```ini
+source = ~/.config/hypr/monitors.conf
+```
+
+### Режим бездействия
+
+`CaffeineToggle` временно запрещает блокировку и гашение экрана по бездействию — например, во время чтения. Он использует встроенный `IdleInhibitor` Quickshell и протокол Wayland `idle-inhibit`; дополнительные программы не нужны.
+
+При переключении в правом нижнем углу на две секунды появляется значок состояния. Нажатие на значок переключает режим. После перезапуска режим снова выключен.
+
+## Настройка и структура проекта
+
+- **Цвета:** измените корневой `DefaultTheme.qml`, чтобы обновить все модули. По умолчанию используется палитра Nordic/Nord. Отдельному компоненту можно передать собственный объект через `theme`.
+- **Шрифт:** измените свойство `font` во входном компоненте модуля или задайте его при подключении, например `Bar { font: "Your Nerd Font" }`.
+- **Расположение виджетов:** редактируйте `Bar/Bar.qml`.
+- **Частота обновления статистики:** измените интервал таймера в `Bar/SystemInfo.qml`; по умолчанию он равен двум секундам.
+- **Новый модуль:** создайте каталог с входным QML-компонентом, добавьте `import ".." as Shared` и `property var theme: Shared.DefaultTheme`, затем подключите компонент в `shell.qml`.
+
+`shell.qml` объединяет модули, `DefaultTheme.qml` задаёт общую палитру, а каталоги модулей содержат интерфейс и вспомогательные службы. Конфигурация запускается напрямую в Quickshell: сборка и пакетный менеджер не требуются.
+
+После изменений запустите конфигурацию в сессии Hyprland, проверьте изменённый модуль и сообщения об ошибках QML. Синтаксис установщика можно проверить командой `bash -n install.sh`. Файлы состояния `wallpaper.conf` и `monitor-manager.conf` не следует добавлять в Git.
+
+## Благодарности
+
+Проект использует [Quickshell](https://quickshell.outfoxxed.me/) и [Hyprland](https://hyprland.org/). Цветовая схема основана на теме [Nordic GTK](https://github.com/EliverLara/Nordic) от EliverLara и палитре [Nord](https://www.nordtheme.com/). Спасибо их авторам.

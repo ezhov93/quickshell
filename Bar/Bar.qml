@@ -109,50 +109,12 @@ Scope {
         anchors.leftMargin: 10
         anchors.rightMargin: 10
 
-        // Left section: Time + Workspaces + Now Playing
+        // Left section: Workspaces
         Row {
           id: leftSection
           anchors.left: parent.left
           anchors.verticalCenter: parent.verticalCenter
           spacing: 8
-
-          // Time
-          Rectangle {
-            height: 24
-            width: timeDate.width + 16
-            radius: 12
-            color: root.theme.bgSurface
-
-            Row {
-              id: timeDate
-              anchors.centerIn: parent
-              spacing: 8
-
-              Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: ""
-                color: root.theme.accentPrimary
-                font.pixelSize: 14
-                font.family: root.font
-              }
-
-              Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: Time.timeString
-                color: root.theme.textPrimary
-                font.pixelSize: 12
-                font.family: root.font
-              }
-
-              Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: Time.dateString
-                color: root.theme.textSecondary
-                font.pixelSize: 12
-                font.family: root.font
-              }
-            }
-          }
 
           // Workspaces
           Row {
@@ -212,6 +174,104 @@ Scope {
             }
           }
 
+        }
+
+        // Active application beside workspaces; leave the remaining middle space empty.
+        Item {
+          anchors.left: leftSection.right
+          anchors.right: rightSection.left
+          anchors.leftMargin: 12
+          anchors.rightMargin: 12
+          height: parent.height
+
+          Text {
+            Accessible.role: Accessible.StaticText
+            Accessible.name: "Active window: " + text
+            text: Hyprland.activeToplevel ? Hyprland.activeToplevel.title : ""
+            color: root.theme.textPrimary
+            font.pixelSize: 13
+            font.family: root.font
+            elide: Text.ElideRight
+            width: Math.max(0, Math.min(implicitWidth, parent.width))
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+          }
+        }
+
+        // Right section: Tray, media, controls, system status, input language, clock
+        Row {
+          id: rightSection
+          anchors.right: parent.right
+          anchors.verticalCenter: parent.verticalCenter
+          spacing: 8
+
+          // System Tray
+          // There's an issue that some tray not display correctly.
+          // https://github.com/quickshell-mirror/quickshell/issues/26
+          // https://github.com/quickshell-mirror/quickshell/pull/777
+          Rectangle {
+            implicitHeight: 24
+            implicitWidth: trayIcons.implicitWidth + 4
+            radius: 12
+            color: root.theme.bgSurface
+
+            RowLayout {
+              id: trayIcons
+              anchors.centerIn: parent
+              spacing: 2
+
+              Repeater {
+                model: SystemTray.items
+
+                MouseArea {
+                  id: trayDelegate
+                  required property SystemTrayItem modelData
+
+                  Accessible.role: Accessible.Button
+                  Accessible.name: modelData.tooltipTitle || modelData.title || "System tray item"
+
+                  Layout.preferredWidth: 24
+                  Layout.preferredHeight: 24
+
+                  acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+
+                  onClicked: (mouse) => {
+                    if (mouse.button === Qt.LeftButton) {
+                      modelData.activate()
+                    } else if (mouse.button === Qt.RightButton) {
+                      if (modelData.hasMenu) {
+                        menuAnchor.open()
+                      }
+                    } else if (mouse.button === Qt.MiddleButton) {
+                      modelData.secondaryActivate()
+                    }
+                  }
+
+                  IconImage {
+                    anchors.centerIn: parent
+                    source: trayDelegate.modelData.icon
+                    implicitSize: 16
+                  }
+
+                  QsMenuAnchor {
+                    id: menuAnchor
+                    menu: trayDelegate.modelData.menu
+
+                    anchor.window: trayDelegate.QsWindow.window
+                    anchor.adjustment: PopupAdjustment.Flip
+                    anchor.onAnchoring: {
+                      const window = trayDelegate.QsWindow.window;
+                      const widgetRect = window.contentItem.mapFromItem(
+                        trayDelegate, 0, trayDelegate.height,
+                        trayDelegate.width, trayDelegate.height);
+                      menuAnchor.anchor.rect = widgetRect;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
           // Now Playing
           Rectangle {
             height: 24
@@ -263,55 +323,6 @@ Scope {
               anchors.fill: parent
               cursorShape: Qt.PointingHandCursor
               onClicked: root.activePlayer.togglePlaying()
-            }
-          }
-        }
-
-        // Center section: Window Title (truly centered in bar)
-        Item {
-          anchors.centerIn: parent
-          height: parent.height
-          width: Math.max(0, parent.width - 2 * Math.max(leftSection.width, rightSection.width) - 32)
-
-          Text {
-            Accessible.role: Accessible.StaticText
-            Accessible.name: "Active window: " + text
-            text: Hyprland.activeToplevel ? Hyprland.activeToplevel.title : ""
-            color: root.theme.textPrimary
-            font.pixelSize: 13
-            font.family: root.font
-            elide: Text.ElideRight
-            width: Math.min(implicitWidth, parent.width)
-            anchors.centerIn: parent
-          }
-        }
-
-        // Right section: Keyboard Layout + System Info + System Tray
-        Row {
-          id: rightSection
-          anchors.right: parent.right
-          anchors.verticalCenter: parent.verticalCenter
-          spacing: 8
-
-          // Keyboard layout of Hyprland's main keyboard
-          Rectangle {
-            height: 24
-            width: layoutText.implicitWidth + 16
-            radius: 12
-            color: root.theme.bgSurface
-            visible: keyboardLayout.label !== ""
-
-            Accessible.role: Accessible.StaticText
-            Accessible.name: "Keyboard layout: " + keyboardLayout.layoutName
-
-            Text {
-              id: layoutText
-              anchors.centerIn: parent
-              text: keyboardLayout.label
-              color: root.theme.accentPrimary
-              font.pixelSize: 11
-              font.family: root.font
-              font.bold: true
             }
           }
 
@@ -473,6 +484,37 @@ Scope {
               }
             }
 
+            // Temperature
+            Rectangle {
+              height: 24
+              width: tempContent.width + 12
+              radius: 12
+              color: root.theme.bgSurface
+              Accessible.role: Accessible.StaticText
+              Accessible.name: "Temperature: " + SystemInfo.temperature
+
+              Row {
+                id: tempContent
+                anchors.centerIn: parent
+                spacing: 6
+
+                Text {
+                  anchors.verticalCenter: parent.verticalCenter
+                  text: "󰔏"
+                  color: root.theme.accentRed
+                  font.pixelSize: 14
+                  font.family: root.font
+                }
+                Text {
+                  anchors.verticalCenter: parent.verticalCenter
+                  text: SystemInfo.temperature
+                  color: root.theme.textPrimary
+                  font.pixelSize: 11
+                  font.family: root.font
+                }
+              }
+            }
+
             // Network
             Rectangle {
               height: 24
@@ -553,104 +595,69 @@ Scope {
               }
             }
 
-            // Temperature
-            Rectangle {
-              height: 24
-              width: tempContent.width + 12
-              radius: 12
-              color: root.theme.bgSurface
-              Accessible.role: Accessible.StaticText
-              Accessible.name: "Temperature: " + SystemInfo.temperature
 
-              Row {
-                id: tempContent
-                anchors.centerIn: parent
-                spacing: 6
+          }
 
-                Text {
-                  anchors.verticalCenter: parent.verticalCenter
-                  text: "󰔏"
-                  color: root.theme.accentRed
-                  font.pixelSize: 14
-                  font.family: root.font
-                }
-                Text {
-                  anchors.verticalCenter: parent.verticalCenter
-                  text: SystemInfo.temperature
-                  color: root.theme.textPrimary
-                  font.pixelSize: 11
-                  font.family: root.font
-                }
-              }
+          // Keyboard layout of Hyprland's main keyboard
+          Rectangle {
+            height: 24
+            width: layoutText.implicitWidth + 16
+            radius: 12
+            color: root.theme.bgSurface
+            visible: keyboardLayout.label !== ""
+
+            Accessible.role: Accessible.StaticText
+            Accessible.name: "Keyboard layout: " + keyboardLayout.layoutName
+
+            Text {
+              id: layoutText
+              anchors.centerIn: parent
+              text: keyboardLayout.label
+              color: root.theme.accentPrimary
+              font.pixelSize: 11
+              font.family: root.font
+              font.bold: true
             }
           }
 
-          // System Tray
-          // There's an issue that some tray not display correctly.
-          // https://github.com/quickshell-mirror/quickshell/issues/26
-          // https://github.com/quickshell-mirror/quickshell/pull/777
+          // Time
           Rectangle {
-            implicitHeight: 24
-            implicitWidth: trayIcons.implicitWidth + 4
+            height: 24
+            width: timeDate.width + 16
             radius: 12
             color: root.theme.bgSurface
 
-            RowLayout {
-              id: trayIcons
+            Row {
+              id: timeDate
               anchors.centerIn: parent
-              spacing: 2
+              spacing: 8
 
-              Repeater {
-                model: SystemTray.items
+              Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: ""
+                color: root.theme.accentPrimary
+                font.pixelSize: 14
+                font.family: root.font
+              }
 
-                MouseArea {
-                  id: trayDelegate
-                  required property SystemTrayItem modelData
+              Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: Time.dateString
+                color: root.theme.textPrimary
+                font.pixelSize: 12
+                font.family: root.font
+              }
 
-                  Accessible.role: Accessible.Button
-                  Accessible.name: modelData.tooltipTitle || modelData.title || "System tray item"
-
-                  Layout.preferredWidth: 24
-                  Layout.preferredHeight: 24
-
-                  acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-
-                  onClicked: (mouse) => {
-                    if (mouse.button === Qt.LeftButton) {
-                      modelData.activate()
-                    } else if (mouse.button === Qt.RightButton) {
-                      if (modelData.hasMenu) {
-                        menuAnchor.open()
-                      }
-                    } else if (mouse.button === Qt.MiddleButton) {
-                      modelData.secondaryActivate()
-                    }
-                  }
-
-                  IconImage {
-                    anchors.centerIn: parent
-                    source: trayDelegate.modelData.icon
-                    implicitSize: 16
-                  }
-
-                  QsMenuAnchor {
-                    id: menuAnchor
-                    menu: trayDelegate.modelData.menu
-
-                    anchor.window: trayDelegate.QsWindow.window
-                    anchor.adjustment: PopupAdjustment.Flip
-                    anchor.onAnchoring: {
-                      const window = trayDelegate.QsWindow.window;
-                      const widgetRect = window.contentItem.mapFromItem(
-                        trayDelegate, 0, trayDelegate.height,
-                        trayDelegate.width, trayDelegate.height);
-                      menuAnchor.anchor.rect = widgetRect;
-                    }
-                  }
-                }
+              Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: Time.timeString
+                color: root.theme.textSecondary
+                font.pixelSize: 12
+                font.family: root.font
               }
             }
           }
+
         }
       }
 
