@@ -1,4 +1,6 @@
-import ".." as Shared
+import "components"
+import "services"
+import"../../themes" as Themes
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -8,205 +10,23 @@ import QtQuick.Layouts
 Scope {
   id: root
 
-  property var  theme: Shared.DefaultTheme
+  property var  theme: Themes.DefaultTheme
   property string font: "Hack Nerd Font"
 
-  property var  editState:       []
-  property int  selectedIndex:   -1
-  property bool isOpen:          false
-  property bool isApplying:      false
-  property string applyError:    ""
-  property bool hotplugDetected: false
-  property bool persistWarning:  false
-  property var  _openSnapshot:   []
-  property bool _isInitialLoad:  false
-
-  function openEditor() {
-    isOpen          = true;
-    selectedIndex   = -1;
-    applyError      = "";
-    hotplugDetected = false;
-    persistWarning  = !MonitorService.persistenceAvailable;
-    editState       = [];
-    _openSnapshot   = [];
-    _isInitialLoad  = true;
-    MonitorService.refresh();
-  }
-
-  function initEditState() {
-    const raw = MonitorService.monitors.map(m => Object.assign({}, m));
-
-    // Auto-place newly appeared monitors that land at (0,0) overlapping others
-    const enabled    = raw.filter(m => !m.disabled);
-    const rightEdge  = enabled.reduce((max, m) => {
-      const atOrigin = m.x === 0 && m.y === 0;
-      return atOrigin ? max : Math.max(max, m.x + MonitorUtils.logicalW(m));
-    }, 0);
-
-    for (const m of raw) {
-      if (m.disabled || !(m.x === 0 && m.y === 0)) continue;
-      const others   = enabled.filter(o => o.name !== m.name);
-      const overlaps = others.some(o =>
-        MonitorUtils.overlapsAABB(m.x, m.y, MonitorUtils.logicalW(m), MonitorUtils.logicalH(m),
-                                  o.x, o.y, MonitorUtils.logicalW(o), MonitorUtils.logicalH(o))
-      );
-      if (overlaps) m.x = rightEdge;
-    }
-
-    editState      = raw;
-    _openSnapshot  = MonitorService.monitors.map(m => Object.assign({}, m));
-    _isInitialLoad = false;
-  }
-
-  // True when any two enabled, non-mirroring monitors overlap
-  readonly property bool hasOverlap: {
-    const enabled = editState.filter(m => !m.disabled && m.mirrorOf === "");
-    for (let i = 0; i < enabled.length; i++) {
-      for (let j = i + 1; j < enabled.length; j++) {
-        const a = enabled[i], b = enabled[j];
-        if (MonitorUtils.overlapsAABB(
-              a.x, a.y, MonitorUtils.logicalW(a), MonitorUtils.logicalH(a),
-              b.x, b.y, MonitorUtils.logicalW(b), MonitorUtils.logicalH(b)))
-          return true;
-      }
-    }
-    return false;
-  }
-
-  function applyChanges() {
-    const enabledCount = editState.filter(m => !m.disabled).length;
-    if (enabledCount === 0) {
-      applyError = "At least one monitor must remain enabled.";
-      return;
-    }
-    if (root.hasOverlap) {
-      applyError = "Monitors are overlapping — drag them apart before applying.";
-      return;
-    }
-    applyError = "";
-    isApplying = true;
-    // persistToFile is called in onApplyDone success path — not here,
-    // so we never write an invalid config to disk
-    MonitorService.apply(editState);
-  }
-
-  function cancelChanges() {
-    if (!isApplying) isOpen = false;
-  }
-
-  function _hasExternalChange() {
-    const live = MonitorService.monitors;
-    if (live.length !== _openSnapshot.length) return true;
-    for (const snap of _openSnapshot) {
-      const l = live.find(m => m.name === snap.name);
-      if (!l) return true;
-      if (l.selectedMode !== snap.selectedMode) return true;
-      if (l.disabled      !== snap.disabled)    return true;
-      if (l.x             !== snap.x)           return true;
-      if (l.y             !== snap.y)           return true;
-      if (l.scale         !== snap.scale)       return true;
-      if (l.transform     !== snap.transform)   return true;
-    }
-    return false;
-  }
-
-  // editState mutation helpers — all guarded against out-of-bounds selectedIndex
-  function onModeSelected(mode) {
-    if (selectedIndex < 0 || selectedIndex >= editState.length) return;
-    const parsed = MonitorUtils.parseMode(mode);
-    if (!parsed) return;
-    const copy = editState.slice();
-    copy[selectedIndex] = Object.assign({}, editState[selectedIndex], {
-      selectedMode: mode,
-      width:        parsed.w,
-      height:       parsed.h,
-    });
-    editState = copy;
-  }
-
-  function onScaleChanged(scale) {
-    if (selectedIndex < 0 || selectedIndex >= editState.length) return;
-    const copy = editState.slice();
-    copy[selectedIndex] = Object.assign({}, editState[selectedIndex], { scale: scale });
-    editState = copy;
-  }
-
-  function onTransformChanged(t) {
-    if (selectedIndex < 0 || selectedIndex >= editState.length) return;
-    const copy = editState.slice();
-    copy[selectedIndex] = Object.assign({}, editState[selectedIndex], { transform: t });
-    editState = copy;
-  }
-
-  function onEnabledChanged(enabled) {
-    if (selectedIndex < 0 || selectedIndex >= editState.length) return;
-    const willBeDisabled = !enabled;
-    if (willBeDisabled) {
-      const currentlyEnabled = editState.filter(m => !m.disabled).length;
-      if (currentlyEnabled <= 1) {
-        applyError = "Cannot disable the only active monitor.";
-        return;
-      }
-    }
-    const copy = editState.slice();
-    copy[selectedIndex] = Object.assign({}, editState[selectedIndex], { disabled: willBeDisabled });
-    editState = copy;
-  }
-
-  function onMirrorChanged(mirrorName) {
-    if (selectedIndex < 0 || selectedIndex >= editState.length) return;
-    let patch = { mirrorOf: mirrorName };
-    if (mirrorName !== "") {
-      const src = editState.find(m => m.name === mirrorName);
-      if (src) { patch.x = src.x; patch.y = src.y; }
-    }
-    const copy = editState.slice();
-    copy[selectedIndex] = Object.assign({}, editState[selectedIndex], patch);
-    editState = copy;
-  }
+  MonitorEditorState { id: editor }
 
   IpcHandler {
     target: "monitors"
     function toggle(): void {
-      if (root.isOpen) root.isOpen = false;
-      else root.openEditor();
+      if (editor.isOpen) editor.isOpen = false;
+      else editor.openEditor();
     }
     function refresh(): void { MonitorService.refresh(); }
   }
 
-  Connections {
-    target: MonitorService
-
-    function onApplyDone(hasErrors, errorText) {
-      root.isApplying = false;
-      if (hasErrors) {
-        root.applyError = errorText;
-      } else {
-        // Only persist on confirmed success — never write an invalid config
-        MonitorService.persistToFile(root.editState);
-        root.initEditState();
-        root.isOpen = false;
-      }
-    }
-
-    function onMonitorsLoaded() {
-      if (MonitorService._pendingVerify) return;
-      if (!root.isOpen) return;
-
-      if (root._isInitialLoad) {
-        root.initEditState();
-      } else {
-        if (root._hasExternalChange()) {
-          root.hotplugDetected = true;
-          root._openSnapshot = MonitorService.monitors.map(m => Object.assign({}, m));
-        }
-      }
-    }
-  }
-
   PanelWindow {
     id: overlay
-    visible: root.isOpen
+    visible: editor.isOpen
     focusable: true
     color: "transparent"
 
@@ -223,7 +43,7 @@ Scope {
       id: externalChangePollTimer
       interval: 3000
       repeat: true
-      running: root.isOpen
+      running: editor.isOpen
                && !MonitorService.loading
                && !MonitorService._pendingVerify
                && !canvas.isDragging
@@ -236,7 +56,7 @@ Scope {
       onClicked: {
         panel.modePickerOpen   = false;
         panel.mirrorPickerOpen = false;
-        root.cancelChanges();
+        editor.cancelChanges();
       }
 
       Rectangle {
@@ -255,7 +75,7 @@ Scope {
       border.color: root.theme.bgBorder
       border.width: 1
       focus: true
-      Keys.onEscapePressed: { if (!root.isApplying) root.cancelChanges(); }
+      Keys.onEscapePressed: { if (!editor.isApplying) editor.cancelChanges(); }
 
       MouseArea {
         anchors.fill: parent
@@ -302,16 +122,14 @@ Scope {
             id: canvas
             Layout.fillWidth: true
             Layout.fillHeight: true
-            monitors:      root.editState
-            selectedIndex: root.selectedIndex
+            monitors:      editor.editState
+            selectedIndex: editor.selectedIndex
             theme:         root.theme
             font:          root.font
 
-            onMonitorSelected: idx => root.selectedIndex = idx
+            onMonitorSelected: idx => editor.selectedIndex = idx
             onMonitorMoved: (idx, nx, ny) => {
-              const copy = root.editState.slice();
-              copy[idx] = Object.assign({}, root.editState[idx], { x: nx, y: ny });
-              root.editState = copy;
+              editor.updateMonitor(idx, { x: nx, y: ny });
             }
           }
 
@@ -319,25 +137,25 @@ Scope {
             id: panel
             width: 260
             Layout.fillHeight: true
-            visible: root.selectedIndex >= 0 && root.editState.length > 0
+            visible: editor.selectedIndex >= 0 && editor.editState.length > 0
 
-            monitor:     visible ? root.editState[root.selectedIndex] : null
-            allMonitors: root.editState
+            monitor:     visible ? editor.editState[editor.selectedIndex] : null
+            allMonitors: editor.editState
             theme:       root.theme
             font:        root.font
 
-            onModeSelected:     mode    => root.onModeSelected(mode)
-            onScaleSelected:    scale   => root.onScaleChanged(scale)
-            onTransformChanged: t       => root.onTransformChanged(t)
-            onEnableToggled:    enabled => root.onEnabledChanged(enabled)
-            onMirrorChanged:    name    => root.onMirrorChanged(name)
+            onModeSelected:     mode    => editor.onModeSelected(mode)
+            onScaleSelected:    scale   => editor.onScaleChanged(scale)
+            onTransformChanged: t       => editor.onTransformChanged(t)
+            onEnableToggled:    enabled => editor.onEnabledChanged(enabled)
+            onMirrorChanged:    name    => editor.onMirrorChanged(name)
           }
         }
 
         // Persist warning banner
         Rectangle {
           Layout.fillWidth: true
-          visible: root.persistWarning
+          visible: editor.persistWarning
           height: 40
           radius: 8
           color: Qt.rgba(root.theme.accentOrange.r, root.theme.accentOrange.g, root.theme.accentOrange.b, 0.12)
@@ -363,7 +181,7 @@ Scope {
               MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.persistWarning = false
+                onClicked: editor.persistWarning = false
               }
             }
           }
@@ -372,7 +190,7 @@ Scope {
         // Hotplug / external change banner
         Rectangle {
           Layout.fillWidth: true
-          visible: root.hotplugDetected
+          visible: editor.hotplugDetected
           height: 40
           radius: 8
           color: Qt.rgba(root.theme.accentCyan.r, root.theme.accentCyan.g, root.theme.accentCyan.b, 0.12)
@@ -398,7 +216,7 @@ Scope {
               iconSize:  11
               iconColor: root.theme.textPrimary
               baseColor: root.theme.bgSurface
-              onClicked: root.hotplugDetected = false
+              onClicked: editor.hotplugDetected = false
             }
 
             IconButton {
@@ -411,8 +229,8 @@ Scope {
               baseColor:  root.theme.accentCyan
               hoverColor: root.theme.accentCyan
               onClicked: {
-                root.hotplugDetected = false;
-                root.initEditState();
+                editor.hotplugDetected = false;
+                editor.initEditState();
               }
             }
           }
@@ -422,7 +240,7 @@ Scope {
         Rectangle {
           id: errorBanner
           Layout.fillWidth: true
-          visible: root.applyError !== ""
+          visible: editor.applyError !== ""
           height: 40
           radius: 8
           color: Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.15)
@@ -434,7 +252,7 @@ Scope {
           Timer {
             id: errorDismissTimer
             interval: 5000
-            onTriggered: root.applyError = ""
+            onTriggered: editor.applyError = ""
           }
 
           RowLayout {
@@ -443,7 +261,7 @@ Scope {
 
             Text {
               Layout.fillWidth: true
-              text: root.applyError
+              text: editor.applyError
               color: root.theme.accentRed
               font { pixelSize: 11; family: root.font }
               elide: Text.ElideRight
@@ -456,7 +274,7 @@ Scope {
               MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: { errorDismissTimer.stop(); root.applyError = "" }
+                onClicked: { errorDismissTimer.stop(); editor.applyError = "" }
               }
             }
           }
@@ -505,26 +323,26 @@ Scope {
 
           Rectangle {
             width: applyText.width + 24; height: 32; radius: 8
-            color: (root.isApplying || MonitorService.loading || root.hasOverlap)
+            color: (editor.isApplying || MonitorService.loading || editor.hasOverlap)
                    ? root.theme.bgSurface : root.theme.accentPrimary
             border.color: root.theme.bgBorder
             border.width: 1
-            opacity: (root.isApplying || MonitorService.loading || root.hasOverlap) ? 0.5 : 1.0
+            opacity: (editor.isApplying || MonitorService.loading || editor.hasOverlap) ? 0.5 : 1.0
 
             Text {
               id: applyText
               anchors.centerIn: parent
-              text: root.isApplying ? "Applying…" : "Apply"
-              color: (root.isApplying || MonitorService.loading || root.hasOverlap)
+              text: editor.isApplying ? "Applying…" : "Apply"
+              color: (editor.isApplying || MonitorService.loading || editor.hasOverlap)
                      ? root.theme.textMuted : root.theme.bgBase
               font { pixelSize: 12; bold: true; family: root.font }
             }
             MouseArea {
               anchors.fill: parent
-              cursorShape: (root.isApplying || MonitorService.loading || root.hasOverlap)
+              cursorShape: (editor.isApplying || MonitorService.loading || editor.hasOverlap)
                            ? Qt.ArrowCursor : Qt.PointingHandCursor
-              enabled: !root.isApplying && !MonitorService.loading && !root.hasOverlap
-              onClicked: root.applyChanges()
+              enabled: !editor.isApplying && !MonitorService.loading && !editor.hasOverlap
+              onClicked: editor.applyChanges()
             }
           }
         }

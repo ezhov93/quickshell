@@ -70,13 +70,13 @@ bind = SUPER SHIFT, O, exec, qs ipc call monitors refresh
 bind = SUPER, N, exec, qs ipc call notifications dismiss_all
 bind = SUPER SHIFT, N, exec, qs ipc call notifications dnd_toggle
 bind = SUPER, C, exec, qs ipc call idle toggle
-```
+```s
 
 Эти команды работают и из терминала при запущенной конфигурации. Команда `qs ipc call bar toggle` скрывает или показывает панель. Для управления режимом бездействия также доступны `qs ipc call idle enable` и `qs ipc call idle disable`.
 
 ## Подключение отдельных модулей
 
-Скопируйте нужные каталоги модулей и `DefaultTheme.qml` в `~/.config/quickshell/`. Файл темы должен лежать рядом с `shell.qml`, а каталоги модулей — непосредственно под ним.
+Скопируйте нужные каталоги модулей целиком (включая `components/` и `services/`) и `DefaultTheme.qml` в `~/.config/quickshell/`. Файл темы должен лежать рядом с `shell.qml`, а каталоги модулей — непосредственно под ним. Для `Bar` и `Osd` также скопируйте корневой каталог `services/` с файлом `BrightnessService.qml`, который отвечает за чтение и изменение яркости.
 
 Минимальный `shell.qml` с панелью и меню приложений:
 
@@ -158,10 +158,10 @@ source = ~/.config/hypr/monitors.conf
 - **Цвета:** измените корневой `DefaultTheme.qml`, чтобы обновить все модули. По умолчанию используется палитра Nordic/Nord. Отдельному компоненту можно передать собственный объект через `theme`.
 - **Шрифт:** измените свойство `font` во входном компоненте модуля или задайте его при подключении, например `Bar { font: "Your Nerd Font" }`.
 - **Расположение виджетов:** редактируйте `Bar/Bar.qml`.
-- **Частота обновления статистики:** измените интервал таймера в `Bar/SystemInfo.qml`; по умолчанию он равен двум секундам.
-- **Новый модуль:** создайте каталог с входным QML-компонентом, добавьте `import ".." as Shared` и `property var theme: Shared.DefaultTheme`, затем подключите компонент в `shell.qml`.
+- **Частота обновления статистики:** измените интервал таймера в `Bar/services/SystemInfo.qml`; по умолчанию он равен двум секундам.
+- **Новый модуль:** создайте каталог с входным QML-компонентом, добавьте `import"../../themes" as Themes` и `property var theme: Themes.DefaultTheme`, затем подключите компонент в `shell.qml`.
 
-`shell.qml` объединяет модули, `DefaultTheme.qml` задаёт общую палитру, а каталоги модулей содержат интерфейс и вспомогательные службы. Конфигурация запускается напрямую в Quickshell: сборка и пакетный менеджер не требуются.
+`shell.qml` объединяет модули, `DefaultTheme.qml` задаёт общую палитру, `services/BrightnessService.qml` управляет яркостью, а каталоги модулей содержат входной QML-файл, виджеты в `components/` и данные и логику в `services/`. Конфигурация запускается напрямую в Quickshell: сборка и пакетный менеджер не требуются.
 
 После изменений запустите конфигурацию в сессии Hyprland, проверьте изменённый модуль и сообщения об ошибках QML. Синтаксис установщика можно проверить командой `bash -n install.sh`. Файлы состояния `wallpaper.conf` и `monitor-manager.conf` не следует добавлять в Git.
 

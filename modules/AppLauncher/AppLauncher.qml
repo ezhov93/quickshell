@@ -1,4 +1,4 @@
-import ".." as Shared
+import"../../themes" as Themes
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -9,7 +9,7 @@ import QtQuick.Layouts
 
 Scope {
   id: root
-  property var theme: Shared.DefaultTheme
+  property var theme: Themes.DefaultTheme
   property string font: "Hack Nerd Font"
 
   IpcHandler {

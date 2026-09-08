@@ -3,7 +3,9 @@
 ## Structure and Style
 
 - `shell.qml` composes `Bar/`, `AppLauncher/`, `Notifications/`, `Osd/`, `Wallpaper/`, `MonitorManager/`, and `IdleInhibitor/`.
-- The shared palette is the `DefaultTheme.qml` singleton. Preserve `import ".." as Shared` and `property var theme: Shared.DefaultTheme` in entry components; use theme colors.
+- Keep module entry files at the module root, UI components in `components/`, and data/state/helpers in `services/`.
+- `services/BrightnessService.qml` shares brightness state between `Bar` and `Osd`; include the root `services/` directory when installing either module.
+- The shared palette is the `DefaultTheme.qml` singleton. Preserve `import"../../themes" as Themes` and `property var theme: Themes.DefaultTheme` in entry components; use theme colors.
 - Use PascalCase for QML files and components, camelCase for properties and functions. Preserve surrounding indentation and UI/service separation; avoid unrelated formatting.
 - Keep `README.md` in Russian and `AGENTS.md` in English. Document installation, dependencies, and commands in the README, checking them against the code. Quote paths in shell commands.
 

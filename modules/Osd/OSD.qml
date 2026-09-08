@@ -1,6 +1,6 @@
-import ".." as Shared
+import "../../services" as Services
+import"../../themes" as Themes
 import Quickshell
-import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Pipewire
 import QtQuick
@@ -8,16 +8,14 @@ import QtQuick.Layouts
 
 Scope {
   id: root
-  property var theme: Shared.DefaultTheme
+  property var theme: Themes.DefaultTheme
   property string font: "Hack Nerd Font"
 
   property bool showVolume: false
   property bool showBrightness: false
   property real volumeValue: 0
   property bool volumeMuted: false
-  property real brightnessValue: 0
-  property real maxBrightness: 1
-  property bool _brightnessReady: false
+  readonly property real brightnessValue: Services.BrightnessService.value
 
   // PipeWire tracking
   PwObjectTracker {
@@ -46,47 +44,11 @@ Scope {
     onTriggered: root.showVolume = false
   }
 
-  // Brightness monitoring
-  FileView {
-    id: brightnessFile
-    path: ""
-    watchChanges: true
-    onFileChanged: brightnessReadProc.running = true
-  }
-
-  Process {
-    id: brightnessReadProc
-    command: ["brightnessctl", "get"]
-    running: false
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const val = parseInt(text.trim());
-        if (!isNaN(val) && root.maxBrightness > 0) {
-          root.brightnessValue = val / root.maxBrightness;
-          if (root._brightnessReady) {
-            root.showBrightness = true;
-            brightnessHideTimer.restart();
-          }
-          root._brightnessReady = true;
-        }
-      }
-    }
-  }
-
-  Process {
-    id: backlightDiscovery
-    command: ["sh", "-c", "p=$(ls -d /sys/class/backlight/*/brightness 2>/dev/null | head -1); [ -n \"$p\" ] && echo \"$p\" && cat \"${p%brightness}max_brightness\""]
-    running: true
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const lines = text.trim().split("\n");
-        if (lines.length >= 2) {
-          const max = parseInt(lines[1]);
-          if (!isNaN(max) && max > 0) root.maxBrightness = max;
-          brightnessFile.path = lines[0];
-          brightnessReadProc.running = true;
-        }
-      }
+  Connections {
+    target: Services.BrightnessService
+    function onUpdated() {
+      root.showBrightness = true;
+      brightnessHideTimer.restart();
     }
   }
 

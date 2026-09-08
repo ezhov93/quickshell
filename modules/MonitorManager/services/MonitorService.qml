@@ -31,7 +31,7 @@ Singleton {
       ?? `${m.width}x${m.height}@${m.refreshRate.toFixed(2)}Hz`;
   }
 
-  // Shared core: builds one monitor line with a caller-supplied prefix
+  // Themes core: builds one monitor line with a caller-supplied prefix
   // ("keyword monitor " for hyprctl, "monitor=" for monitors.conf)
   function buildMonitorLine(m, prefix) {
     if (m.disabled) return `${prefix}${m.name},disable`;

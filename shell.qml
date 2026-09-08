@@ -7,13 +7,14 @@
 import Quickshell
 import Quickshell.Io
 import QtQuick
-import "Bar"
-import "AppLauncher"
-import "Notifications"
-import "Wallpaper"
-import "Osd"
-import "MonitorManager"
-import "IdleInhibitor"
+
+import "modules/Bar"
+import "modules/AppLauncher"
+import "modules/Notifications"
+import "modules/Wallpaper"
+import "modules/Osd"
+import "modules/MonitorManager"
+import "modules/IdleInhibitor"
 
 Scope {
   Bar {}
