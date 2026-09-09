@@ -21,7 +21,10 @@ Rectangle {
     anchors.centerIn: parent
     width: parent.width * 0.8
     height: parent.height * 0.8
-    source: root.previewPath !== "" ? "file://" + root.previewPath : ""
+    source: root.previewPath !== "" ? "file://" + root.previewPath.split("/").map(encodeURIComponent).join("/") : ""
+    sourceSize.width: Math.ceil(width)
+    sourceSize.height: Math.ceil(height)
+    cache: false
     fillMode: Image.PreserveAspectFit
     asynchronous: true
   }

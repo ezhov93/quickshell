@@ -4,30 +4,35 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
+import "../../../services" as Services
 
 Singleton {
   id: root
-
-  property var  monitors:             []
-  property bool loading:              false
+  property var monitors: []
+  property bool loading: false
+  property bool applying: false
+  property bool saving: false
   property bool persistenceAvailable: false
-  property string configFormat:       "conf" // "conf" or "lua" — which hyprland.* is active
-
-  property var  _lastEdits:     []
+  readonly property string configFormat: Hyprland.usingLua ? "lua" : "conf"
+  property string configDirectory: Quickshell.env("HOME") + "/.config/hypr"
+  property var _lastEdits: []
   property bool _pendingVerify: false
+  property bool refreshPending: false
+  property string queryError: ""
 
   signal monitorsLoaded()
   signal applyDone(bool hasErrors, string errorText)
+  signal persistDone(bool hasErrors, string errorText)
 
   function findCurrentMode(m) {
     const target      = `${m.width}x${m.height}`;
     const rateRounded = Math.round(m.refreshRate);
-    return m.availableModes.find(mode => {
+    return (m.availableModes || []).find(mode => {
       const match = mode.match(/^(\d+x\d+)@([\d.]+)Hz$/);
       return match
         && match[1] === target
         && Math.round(parseFloat(match[2])) === rateRounded;
-    }) ?? m.availableModes[0]
+    }) ?? (m.availableModes || [])[0]
       ?? `${m.width}x${m.height}@${m.refreshRate.toFixed(2)}Hz`;
   }
 
@@ -56,13 +61,13 @@ Singleton {
 
   // Lua equivalent of buildMonitorLine/buildFileContent, used when hyprland.lua is active.
   function buildMonitorLuaLine(m) {
-    if (m.disabled) return `hl.monitor({ output = "${m.name}", disabled = true })`;
+    if (m.disabled) return `hl.monitor({ output = ${JSON.stringify(m.name)}, disabled = true })`;
     const parsed = MonitorUtils.parseMode(m.selectedMode);
     const res  = parsed ? `${parsed.w}x${parsed.h}` : `${m.width}x${m.height}`;
     const rate = parsed ? parsed.rate : m.refreshRate.toFixed(2);
-    let fields = `output = "${m.name}", mode = "${res}@${rate}", position = "${m.x}x${m.y}", scale = ${m.scale}`;
+    let fields = `output = ${JSON.stringify(m.name)}, mode = "${res}@${rate}", position = "${m.x}x${m.y}", scale = ${m.scale}`;
     if (m.transform !== 0) fields += `, transform = ${m.transform}`;
-    if (m.mirrorOf  !== "") fields += `, mirror = "${m.mirrorOf}"`;
+    if (m.mirrorOf  !== "") fields += `, mirror = ${JSON.stringify(m.mirrorOf)}`;
     return `hl.monitor({ ${fields} })`;
   }
 
@@ -72,193 +77,125 @@ Singleton {
     return lines.join("\n") + "\n";
   }
 
-  function refresh() {
-    refreshDebounce.restart();
+  function refresh() { refreshDebounce.restart(); }
+
+  function normalize(raw) {
+    if (!Array.isArray(raw)) throw new Error("Invalid monitor response");
+    return raw.map(m => ({
+      name: m.name, description: m.description || "", width: m.width, height: m.height,
+      x: m.x, y: m.y, selectedMode: root.findCurrentMode(m), scale: m.scale,
+      refreshRate: m.refreshRate, transform: m.transform || 0, disabled: !!m.disabled,
+      mirrorOf: (() => {
+        if (!m.mirrorOf || m.mirrorOf === "none") return "";
+        const id = Number(m.mirrorOf);
+        return Number.isFinite(id) ? raw.find(other => other.id === id)?.name ?? "" : m.mirrorOf;
+      })(),
+      availableModes: m.availableModes || []
+    }));
+  }
+
+  function query(callback) {
+    loading = true;
+    Services.HyprlandClient.request("j/monitors all", (text, error) => {
+      try {
+        if (error) throw new Error(error);
+        monitors = normalize(JSON.parse(text));
+        queryError = "";
+      } catch (e) { queryError = String(e); }
+      loading = false;
+      if (!queryError) monitorsLoaded();
+      callback(queryError);
+    });
   }
 
   function _doRefresh() {
-    if (loading) return;
-    loading = true;
-    queryProc.running = true;
+    if (loading || applying) { refreshPending = true; return; }
+    refreshPending = false;
+    query(error => {
+      if (error) console.warn("Could not read monitors:", error);
+      if (refreshPending) refresh();
+    });
   }
 
   function apply(edits) {
-    // Guard against double-apply
-    if (applyProc.running) return;
-    _lastEdits = edits;
-    const parts = edits.map(buildMonitorArg);
-    applyProc.command = ["hyprctl", "--batch", parts.join(" ; ")];
-    applyProc.running = true;
-  }
-
-  function persistToFile(edits) {
-    const isLua  = root.configFormat === "lua";
-    const content = isLua ? buildFileContentLua(edits) : buildFileContent(edits);
-    const target  = isLua ? "~/.config/hypr/monitors.lua" : "~/.config/hypr/monitors.conf";
-    writeProc.command = [
-      "python3", "-c",
-      `import os; open(os.path.expanduser('${target}'), 'w').write(${JSON.stringify(content)})`
-    ];
-    writeProc.running = true;
+    if (applying || saving) return;
+    applying = true;
+    _lastEdits = edits.map(m => Object.assign({}, m));
+    const command = "[[BATCH]]" + _lastEdits.map(buildMonitorArg).join(" ; ");
+    Services.HyprlandClient.request(command, (text, error) => {
+      const errors = text.split("\n").map(s => s.trim()).filter(s => s !== "" && s !== "ok");
+      if (error || errors.length > 0) {
+        finishApply(error || errors.join("; "));
+        return;
+      }
+      // Always enqueue a NEW read after the apply reply. An older poll is not verification.
+      _pendingVerify = true;
+      query(queryError => finishApply(queryError || verifyApply()));
+    });
   }
 
   function verifyApply() {
     const mismatches = [];
     for (const edit of _lastEdits) {
       const live = monitors.find(m => m.name === edit.name);
-      if (!live) {
-        mismatches.push(`${edit.name}: not found after apply`);
-        continue;
-      }
-      if (live.disabled !== edit.disabled)
-        mismatches.push(`${edit.name}: enabled state did not apply`);
-      if (!edit.disabled && live.selectedMode !== edit.selectedMode)
-        mismatches.push(`${edit.name}: mode ${edit.selectedMode} → got ${live.selectedMode}`);
+      if (!live) { mismatches.push(edit.name + ": not found after apply"); continue; }
+      if (live.disabled !== edit.disabled) mismatches.push(edit.name + ": enabled state did not apply");
+      if (edit.disabled) continue;
+      const expectedMode = MonitorUtils.parseMode(edit.selectedMode);
+      if (!expectedMode || live.width !== expectedMode.w || live.height !== expectedMode.h
+          || Math.abs(live.refreshRate - expectedMode.rate) > 0.1)
+        mismatches.push(edit.name + ": mode did not apply");
+      for (const key of ["x", "y", "transform", "mirrorOf"])
+        if (live[key] !== edit[key]) mismatches.push(edit.name + ": " + key + " did not apply");
+      if (Math.abs(live.scale - edit.scale) > 0.001) mismatches.push(edit.name + ": scale did not apply");
     }
+    return mismatches.join("; ");
+  }
+
+  function finishApply(error) {
     _pendingVerify = false;
-    applyDone(mismatches.length > 0, mismatches.join("; "));
+    applying = false;
+    applyDone(error !== "", error);
+    if (refreshPending) refresh();
   }
 
-  onMonitorsLoaded: {
-    if (_pendingVerify) verifyApply();
+  function persistToFile(edits) {
+    if (saving) return;
+    saving = true;
+    savedConfig.write(configDirectory + "/monitors." + configFormat,
+      configFormat === "lua" ? buildFileContentLua(edits) : buildFileContent(edits));
   }
 
-  // Debounce timer — absorbs hotplug bursts (DisplayPort negotiation)
-  Timer {
-    id: refreshDebounce
-    interval: 250
-    repeat: false
-    onTriggered: root._doRefresh()
-  }
-
-  // Check which config format is active (hyprland.lua wins exclusively if present, per
-  // Hyprland's own startup precedence) and whether it wires up monitor persistence.
-  Process {
-    id: sourceCheck
-    command: ["sh", "-c",
-      "if [ -f \"$HOME/.config/hypr/hyprland.lua\" ]; then " +
-        "echo lua; " +
-        "grep -Eq 'require\\(\"monitors\"\\)' \"$HOME/.config/hypr/hyprland.lua\" && echo yes || echo no; " +
-      "else " +
-        "echo conf; " +
-        "grep -q 'source.*monitors\\.conf' \"$HOME/.config/hypr/hyprland.conf\" && echo yes || echo no; " +
-      "fi"]
-    running: true
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const lines = text.trim().split("\n");
-        root.configFormat        = lines[0] === "lua" ? "lua" : "conf";
-        root.persistenceAvailable = lines[1] === "yes";
-      }
-    }
-    stderr: StdioCollector {
-      onStreamFinished: {
-        if (text.trim() !== "") console.warn("MonitorService sourceCheck:", text.trim());
-      }
+  Services.TextFileWriter {
+    id: savedConfig
+    onCompleted: (success, error) => {
+      root.saving = false;
+      root.persistDone(!success, success ? "" : "Display settings applied, but could not save: " + error);
     }
   }
-
-  // Query live monitor state
-  Process {
-    id: queryProc
-    command: ["hyprctl", "-j", "monitors", "all"]
-    running: false
-    stdout: StdioCollector {
-      onStreamFinished: {
-        try {
-          const raw = JSON.parse(text);
-          root.monitors = raw.map(m => ({
-            name:           m.name,
-            description:    m.description,
-            width:          m.width,
-            height:         m.height,
-            x:              m.x,
-            y:              m.y,
-            selectedMode:   root.findCurrentMode(m),
-            scale:          m.scale,
-            transform:      m.transform,
-            disabled:       m.disabled,
-            mirrorOf:       (() => {
-              if (!m.mirrorOf || m.mirrorOf === "none") return "";
-              // hyprctl -j returns mirrorOf as a stringified monitor ID (e.g. "0") rather than
-              // the monitor name, so a direct display in the UI would show "0" instead of
-              // "eDP-1".  Resolve it to the name so the rest of the codebase never sees raw IDs.
-              const asId = parseInt(m.mirrorOf, 10);
-              if (!isNaN(asId)) return raw.find(x => x.id === asId)?.name ?? "";
-              return m.mirrorOf;
-            })(),
-            availableModes: m.availableModes,
-          }));
-          root.loading = false;
-          root.monitorsLoaded();
-        } catch (e) {
-          console.error("MonitorService: JSON parse failed:", e);
-          root.loading = false;
-        }
-      }
+  FileView {
+    id: sourceConfig
+    path: root.configDirectory + "/hyprland." + root.configFormat
+    blockLoading: false
+    printErrors: false
+    watchChanges: true
+    onFileChanged: reload()
+    onLoaded: {
+      const content = text().split("\n").filter(line => !line.trim().startsWith(root.configFormat === "lua" ? "--" : "#")).join("\n");
+      root.persistenceAvailable = root.configFormat === "lua"
+        ? /require\s*\(?\s*["']monitors["']/.test(content)
+        : /^\s*source\s*=.*monitors\.conf\s*(?:#.*)?$/m.test(content);
     }
-    stderr: StdioCollector {
-      onStreamFinished: {
-        if (text.trim() !== "") console.warn("MonitorService queryProc:", text.trim());
-      }
-    }
+    onLoadFailed: root.persistenceAvailable = false
   }
-
-  // Apply monitor configuration
-  Process {
-    id: applyProc
-    running: false
-    stdout: StdioCollector {
-      onStreamFinished: {
-        // hyprctl always exits 0 — parse stdout for errors
-        const lines  = text.trim().split("\n");
-        const errors = lines.filter(l => l.trim() !== "" && l.trim() !== "ok");
-
-        if (errors.length > 0) {
-          root.applyDone(true, errors.join("; "));
-        } else {
-          root._pendingVerify = true;
-          root.loading = true;
-          // If queryProc is already running (poll timer race), it will finish
-          // and call monitorsLoaded → verifyApply via _pendingVerify.
-          // If it's idle, start it now.
-          if (!queryProc.running) queryProc.running = true;
-        }
-      }
-    }
-    stderr: StdioCollector {
-      onStreamFinished: {
-        if (text.trim() !== "") {
-          root.applyDone(true, text.trim());
-        }
-      }
-    }
-  }
-
-  // Write monitors.conf — fire and forget; log errors
-  Process {
-    id: writeProc
-    running: false
-    stdout: StdioCollector {}
-    stderr: StdioCollector {
-      onStreamFinished: {
-        if (text.trim() !== "")
-          console.error("MonitorService: monitors.conf write failed:", text.trim());
-      }
-    }
-  }
-
-  // Listen for Hyprland events: hotplug and config reload
+  Timer { id: refreshDebounce; interval: 250; onTriggered: root._doRefresh() }
   Connections {
     target: Hyprland
     function onRawEvent(event) {
-      // Never interrupt post-apply verification for config reload,
-      // but allow hotplug events through so newly connected monitors
-      // are detected even if we're mid-verify
-      if (root._pendingVerify && event.name === "configreloaded") return;
-
-      const triggers = ["monitoradded", "monitorremoved", "configreloaded"];
-      if (triggers.includes(event.name)) root.refresh();
+      if (["monitoradded", "monitorremoved", "configreloaded"].includes(event.name)) {
+        if (event.name === "configreloaded") sourceConfig.reload();
+        root.refresh();
+      }
     }
   }
 }

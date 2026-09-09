@@ -25,12 +25,12 @@ for dependency in quickshell hyprctl; do
   fi
 done
 
-for dependency in brightnessctl nmcli; do
+for dependency in brightnessctl NetworkManager upower ip nmtui; do
   command -v "$dependency" >/dev/null 2>&1 || printf 'Optional dependency missing: %s\n' "$dependency"
 done
 
-if ! command -v hyprpaper >/dev/null 2>&1 && ! command -v swww >/dev/null 2>&1; then
-  printf 'Wallpaper support requires hyprpaper or swww.\n'
+if ! command -v hyprpaper >/dev/null 2>&1; then
+  printf 'Wallpaper support requires hyprpaper 0.8 or newer.\n'
 fi
 
 mkdir -p -- "$config_dir"
@@ -55,6 +55,8 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
+
+printf 'Requires Quickshell 0.3.1+ with Networking, UPower, PipeWire and Qt.labs.folderlistmodel.\n'
 
 # Находим и копируем ВСЕ QML файлы, сохраняя структуру
 echo "Copying all QML files from $source_dir..."

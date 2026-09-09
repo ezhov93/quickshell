@@ -27,7 +27,7 @@ Item {
     Image {
       anchors.fill: parent
       anchors.margins: 2
-      source: "file://" + modelData
+      source: "file://" + modelData.split("/").map(encodeURIComponent).join("/")
       fillMode: Image.PreserveAspectCrop
       sourceSize.width: 200
       sourceSize.height: 120

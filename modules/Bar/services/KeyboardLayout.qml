@@ -1,51 +1,59 @@
 import Quickshell
-import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
+import "../../../services" as Services
 
 Scope {
   id: root
-
   property string label: ""
   property string layoutName: ""
+  property string keyboardName: ""
+  property var layouts: []
+  property var layoutLabels: ({})
+  property bool loading: false
+  property bool pending: false
 
-  // Coalesce events and repeat a read if the layout changed during it.
-  Timer {
-    id: refreshTimer
-    interval: 50
-    onTriggered: {
-      if (devicesProc.running) restart();
-      else devicesProc.running = true;
-    }
+  function setLayout(name, code = "") {
+    layoutName = name;
+    label = code === "us" || code === "gb" ? "EN" : code ? code.toUpperCase() : name.slice(0, 3).toUpperCase();
+    if (name && code) layoutLabels[name] = label;
+  }
+  function refresh() {
+    if (loading) { pending = true; return; }
+    loading = true;
+    Services.HyprlandClient.request("j/devices", (text, error) => {
+      try {
+        if (error) throw new Error(error);
+        const keyboards = JSON.parse(text).keyboards || [];
+        const keyboard = keyboards.find(k => k.main) || keyboards[0];
+        keyboardName = keyboard?.name ?? "";
+        layouts = (keyboard?.layout || "").split(",").map(s => s.trim());
+        setLayout(keyboard?.active_keymap ?? "", layouts[keyboard?.active_layout_index] || "");
+      } catch (e) {
+        setLayout("");
+        console.warn("Failed to read keyboard layout:", e);
+      }
+      loading = false;
+      if (pending) { pending = false; refreshTimer.restart(); }
+    });
   }
 
+  Timer { id: refreshTimer; interval: 50; onTriggered: root.refresh() }
+  Component.onCompleted: refreshTimer.start()
   Connections {
     target: Hyprland
     function onRawEvent(event) {
-      if (["activelayout", "configreloaded", "deviceadded", "deviceremoved"].includes(event.name))
+      if (event.name === "activelayout") {
+        const parts = event.parse(2);
+        if (parts[0] !== root.keyboardName) return;
+        root.layoutName = parts[1] || "";
+        // Cache the exact short code after the first observation of each layout.
+        if (root.layoutLabels[root.layoutName]) root.label = root.layoutLabels[root.layoutName];
+        else { root.label = root.layoutName.slice(0, 3).toUpperCase(); refreshTimer.restart(); }
+        if (root.loading) root.pending = true;
+      } else if (["configreloaded", "deviceadded", "deviceremoved"].includes(event.name)) {
+        root.layoutLabels = ({});
         refreshTimer.restart();
-    }
-  }
-
-  Process {
-    id: devicesProc
-    command: ["hyprctl", "-j", "devices"]
-    running: true
-    stdout: StdioCollector {
-      onStreamFinished: {
-        try {
-          const keyboards = JSON.parse(text).keyboards || [];
-          const keyboard = keyboards.find(k => k.main) || keyboards[0];
-          root.layoutName = keyboard ? keyboard.active_keymap || "" : "";
-          const layouts = keyboard ? (keyboard.layout || "").split(",") : [];
-          const code = keyboard ? (layouts[keyboard.active_layout_index] || "").trim() : "";
-          root.label = code === "us" || code === "gb" ? "EN"
-            : code ? code.toUpperCase() : root.layoutName.slice(0, 3).toUpperCase();
-        } catch (e) {
-          root.label = "";
-          root.layoutName = "";
-          console.warn("Failed to read keyboard layout:", e);
-        }
       }
     }
   }

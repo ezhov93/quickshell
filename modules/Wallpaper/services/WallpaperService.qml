@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../../services" as Services
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -14,20 +15,14 @@ Singleton {
   property int restoreAttempts: 0
   property string applyError: ""
 
-  // Scan wallpaper directories
-  Process {
+  property bool scanned: false
+  property bool saving: false
+  Services.DirectoryScanner {
     id: scanner
-    command: ["sh", "-c",
-      "find ~/Pictures/Wallpapers ~/Pictures -maxdepth 2 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) 2>/dev/null | sort -u | head -200"
-    ]
-    running: false
-    stdout: SplitParser {
-      onRead: data => {
-        const path = data.trim();
-        if (path !== "") {
-          root.wallpapers = [...root.wallpapers, path];
-        }
-      }
+    onFinished: entries => {
+      const paths = entries.filter(e => !e.isDir && /\.(jpg|jpeg|png|webp)$/i.test(e.name)).map(e => e.path);
+      root.wallpapers = [...new Set(paths)].sort().slice(0, 200);
+      root.scanned = true;
     }
   }
 
@@ -35,6 +30,7 @@ Singleton {
   FileView {
     id: configFile
     path: Quickshell.env("HOME") + "/.config/quickshell/wallpaper.conf"
+    blockLoading: false
     // No saved wallpaper is normal on the first run.
     printErrors: false
     onLoadFailed: error => {
@@ -50,17 +46,23 @@ Singleton {
     }
   }
 
-  Component.onCompleted: {
-    scanner.running = true;
+  Services.TextFileWriter {
+    id: configWriter
+    onCompleted: (success, error) => {
+      root.saving = false;
+      if (!success) {
+        root.applyError = "Wallpaper applied, but could not save: " + error;
+        console.warn(root.applyError);
+      }
+    }
   }
 
   function rescan() {
-    wallpapers = [];
-    scanner.running = true;
+    scanner.scan([Quickshell.env("HOME") + "/Pictures/Wallpapers", Quickshell.env("HOME") + "/Pictures"], 2);
   }
 
   function setWallpaper(path, restoring = false) {
-    if (setProcess.running || saveProcess.running || path === "") return;
+    if (setProcess.running || root.saving || path === "") return;
     restoreTimer.stop();
     if (!restoring) restoreAttempts = 0;
     pendingWallpaper = path;
@@ -91,6 +93,7 @@ Singleton {
     }
     onExited: (exitCode, exitStatus) => {
       if (exitCode !== 0 || exitStatus !== 0) {
+        if (!root.applyError.trim()) root.applyError = "Hyprpaper failed (exit " + exitCode + ")";
         if (root.restoreAttempts > 0 && root.restoreAttempts < 10) {
           restoreTimer.start();
         } else {
@@ -100,19 +103,11 @@ Singleton {
         return;
       }
       root.restoreAttempts = 0;
+      root.applyError = "";
       root.currentWallpaper = root.pendingWallpaper;
-      saveProcess.command = ["sh", "-c", 'mkdir -p "$HOME/.config/quickshell" && printf "%s" "$1" > "$HOME/.config/quickshell/wallpaper.conf"', "sh", root.currentWallpaper];
-      saveProcess.running = true;
+      root.saving = true;
+      configWriter.write(configFile.path, root.currentWallpaper);
     }
   }
 
-  Process {
-    id: saveProcess
-    command: []
-    running: false
-    onExited: (exitCode, exitStatus) => {
-      if (exitCode !== 0 || exitStatus !== 0)
-        console.warn("Could not save wallpaper configuration");
-    }
-  }
 }

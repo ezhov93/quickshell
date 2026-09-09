@@ -11,6 +11,7 @@ Scope {
   property string applyError:    ""
   property bool hotplugDetected: false
   property bool persistWarning:  false
+  property var  _pendingEdits: []
   property var  _openSnapshot:   []
   property bool _isInitialLoad:  false
 
@@ -67,6 +68,7 @@ Scope {
   }
 
   function applyChanges() {
+    if (isApplying || root.service.applying || root.service.saving) return;
     const enabledCount = editState.filter(m => !m.disabled).length;
     if (enabledCount === 0) {
       applyError = "At least one monitor must remain enabled.";
@@ -80,7 +82,8 @@ Scope {
     isApplying = true;
     // persistToFile is called in onApplyDone success path — not here,
     // so we never write an invalid config to disk
-    root.service.apply(editState);
+    _pendingEdits = editState.map(m => Object.assign({}, m));
+    root.service.apply(_pendingEdits);
   }
 
   function cancelChanges() {
@@ -99,6 +102,7 @@ Scope {
       if (l.y             !== snap.y)           return true;
       if (l.scale         !== snap.scale)       return true;
       if (l.transform     !== snap.transform)   return true;
+      if (l.mirrorOf      !== snap.mirrorOf)    return true;
     }
     return false;
   }
@@ -150,19 +154,30 @@ Scope {
     target: root.service
 
     function onApplyDone(hasErrors, errorText) {
-      root.isApplying = false;
+      if (!root.isApplying) return;
       if (hasErrors) {
+        root.isApplying = false;
         root.applyError = errorText;
       } else {
         // Only persist on confirmed success — never write an invalid config
-        root.service.persistToFile(root.editState);
-        root.initEditState();
-        root.isOpen = false;
+        root.service.persistToFile(root._pendingEdits);
       }
     }
 
+    function onPersistDone(hasErrors, errorText) {
+      if (!root.isApplying) return;
+      root.isApplying = false;
+      root.initEditState();
+      if (hasErrors) root.applyError = errorText;
+      else root.isOpen = false;
+    }
+
+    function onQueryErrorChanged() {
+      if (root.isOpen && root.service.queryError) root.applyError = root.service.queryError;
+    }
+
     function onMonitorsLoaded() {
-      if (root.service._pendingVerify) return;
+      if (root.service.applying) return;
       if (!root.isOpen) return;
 
       if (root._isInitialLoad) {
@@ -177,6 +192,7 @@ Scope {
   }
 
   function updateMonitor(index, patch) {
+    if (isApplying) return;
     if (index < 0 || index >= editState.length) return;
     const copy = editState.slice();
     copy[index] = Object.assign({}, editState[index], patch);

@@ -6,12 +6,21 @@ Row {
   required property var theme
   required property string font
   signal openNetworkSettings()
+  readonly property string cpuLabel: Number.isFinite(ResourceService.cpuUsage) ? Math.round(ResourceService.cpuUsage * 100) + "%" : "N/A"
+  readonly property string temperatureLabel: Number.isFinite(ResourceService.temperature) ? Math.round(ResourceService.temperature) + "°C" : "N/A"
+  readonly property string batteryLabel: Number.isFinite(BatteryService.charge) ? Math.round(BatteryService.charge * 100) + "%" : "N/A"
+  readonly property string batteryIcon: {
+    if (BatteryService.charging) return "";
+    if (!Number.isFinite(BatteryService.charge)) return "󰂎";
+    const icons = ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"];
+    return icons[Math.min(9, Math.max(0, Math.floor(BatteryService.charge * 10)))];
+  }
 
 
   readonly property color batteryColor: {
-    if (SystemInfo.batteryCharging) return root.theme.accentGreen;
-    if (SystemInfo.batteryLevelRaw > 20) return root.theme.batteryGood;
-    if (SystemInfo.batteryLevelRaw > 10) return root.theme.batteryWarning;
+    if (BatteryService.charging) return root.theme.accentGreen;
+    if (Math.round(BatteryService.charge * 100) > 20) return root.theme.batteryGood;
+    if (Math.round(BatteryService.charge * 100) > 10) return root.theme.batteryWarning;
     return root.theme.batteryCritical;
   }
 
@@ -24,7 +33,7 @@ Row {
     radius: 12
     color: root.theme.bgSurface
     Accessible.role: Accessible.StaticText
-    Accessible.name: "CPU: " + SystemInfo.cpuUsage
+    Accessible.name: "CPU: " + root.cpuLabel
 
     Row {
       id: cpuContent
@@ -40,7 +49,7 @@ Row {
       }
       Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: SystemInfo.cpuUsage
+        text: root.cpuLabel
         color: root.theme.textPrimary
         font.pixelSize: 11
         font.family: root.font
@@ -55,7 +64,7 @@ Row {
     radius: 12
     color: root.theme.bgSurface
     Accessible.role: Accessible.StaticText
-    Accessible.name: "Temperature: " + SystemInfo.temperature
+    Accessible.name: "Temperature: " + root.temperatureLabel
 
     Row {
       id: tempContent
@@ -71,7 +80,7 @@ Row {
       }
       Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: SystemInfo.temperature
+        text: root.temperatureLabel
         color: root.theme.textPrimary
         font.pixelSize: 11
         font.family: root.font
@@ -87,9 +96,9 @@ Row {
     color: networkMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
     Accessible.role: Accessible.Button
     Accessible.name: {
-      if (SystemInfo.networkType === "ethernet") return "Network: Ethernet"
-      if (SystemInfo.networkType === "wifi") return "Network: WiFi " + SystemInfo.networkInfo
-      return "Network: " + SystemInfo.networkInfo
+      if (NetworkService.type === "ethernet") return "Network: Ethernet"
+      if (NetworkService.type === "wifi") return "Network: WiFi " + NetworkService.name
+      return "Network: " + NetworkService.name
     }
     Accessible.description: "Open network settings (nmtui)"
     Accessible.onPressAction: root.openNetworkSettings()
@@ -110,17 +119,17 @@ Row {
       Text {
         anchors.verticalCenter: parent.verticalCenter
         text: {
-          if (SystemInfo.networkType === "ethernet") return "󰈀"
-          if (SystemInfo.networkType === "wifi") return "󰖩"
+          if (NetworkService.type === "ethernet") return "󰈀"
+          if (NetworkService.type === "wifi") return "󰖩"
           return "󰖪"
         }
-        color: SystemInfo.networkType === "disconnected" ? root.theme.textMuted : root.theme.accentGreen
+        color: NetworkService.type === "disconnected" ? root.theme.textMuted : root.theme.accentGreen
         font.pixelSize: 14
         font.family: root.font
       }
       Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: SystemInfo.networkInfo
+        text: NetworkService.name
         color: root.theme.textPrimary
         font.pixelSize: 11
         font.family: root.font
@@ -130,12 +139,13 @@ Row {
 
   // Battery
   Rectangle {
+    visible: BatteryService.available
     height: 24
     width: battContent.width + 12
     radius: 12
     color: root.theme.bgSurface
     Accessible.role: Accessible.StaticText
-    Accessible.name: "Battery: " + SystemInfo.batteryLevel
+    Accessible.name: "Battery: " + root.batteryLabel
 
     Row {
       id: battContent
@@ -144,14 +154,14 @@ Row {
 
       Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: SystemInfo.batteryIcon
+        text: root.batteryIcon
         color: root.batteryColor
         font.pixelSize: 14
         font.family: root.font
       }
       Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: SystemInfo.batteryLevel
+        text: root.batteryLabel
         color: root.theme.textPrimary
         font.pixelSize: 11
         font.family: root.font

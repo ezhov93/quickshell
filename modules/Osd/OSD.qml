@@ -2,7 +2,6 @@ import "../../services" as Services
 import"../../themes" as Themes
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Layouts
 
@@ -13,29 +12,23 @@ Scope {
 
   property bool showVolume: false
   property bool showBrightness: false
-  property real volumeValue: 0
-  property bool volumeMuted: false
+  readonly property real volumeValue: Services.AudioService.volume
+  readonly property bool volumeMuted: Services.AudioService.muted
   readonly property real brightnessValue: Services.BrightnessService.value
 
-  // PipeWire tracking
-  PwObjectTracker {
-    objects: [Pipewire.defaultAudioSink]
+  Connections {
+    target: Services.AudioService
+    function onVolumeChanged() { root.showAudio(); }
+    function onMutedChanged() { root.showAudio(); }
+    function onAvailableChanged() {
+      if (!Services.AudioService.available) root.showVolume = false;
+    }
   }
 
-  Connections {
-    target: Pipewire.defaultAudioSink?.audio ?? null
-
-    function onVolumeChanged() {
-      root.volumeValue = Pipewire.defaultAudioSink.audio.volume;
-      root.showVolume = true;
-      volumeHideTimer.restart();
-    }
-
-    function onMutedChanged() {
-      root.volumeMuted = Pipewire.defaultAudioSink.audio.muted;
-      root.showVolume = true;
-      volumeHideTimer.restart();
-    }
+  function showAudio() {
+    if (!Services.AudioService.available) return;
+    showVolume = true;
+    volumeHideTimer.restart();
   }
 
   Timer {

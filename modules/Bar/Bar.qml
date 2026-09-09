@@ -17,6 +17,9 @@ Scope {
     command: root.networkSettingsCommand
   }
 
+  Binding { target: ResourceService; property: "active"; value: root.barVisible }
+  Binding { target: NetworkService; property: "active"; value: root.barVisible }
+
   KeyboardLayout { id: keyboardLayout }
 
   IpcHandler {

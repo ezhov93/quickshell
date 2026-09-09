@@ -1,11 +1,11 @@
 import QtQuick
-import Quickshell.Services.Pipewire
+import "../../../services" as Services
 
 Rectangle {
   id: root
   required property var theme
   required property string font
-  PwObjectTracker { objects: [Pipewire.defaultAudioSink] }
+
 
   height: 24
   width: volContent.width + 12
@@ -14,7 +14,7 @@ Rectangle {
 
   Accessible.role: Accessible.StaticText
   Accessible.name: {
-    const sink = Pipewire.defaultAudioSink;
+    const sink = Services.AudioService.sink;
     if (!sink || !sink.audio) return "Volume";
     if (sink.audio.muted) return "Volume: muted";
     return "Volume: " + Math.round(sink.audio.volume * 100) + "%";
@@ -28,14 +28,14 @@ Rectangle {
     Text {
       anchors.verticalCenter: parent.verticalCenter
       text: {
-        const sink = Pipewire.defaultAudioSink;
+        const sink = Services.AudioService.sink;
         if (!sink || !sink.audio || sink.audio.muted || sink.audio.volume <= 0) return "󰖁";
         if (sink.audio.volume < 0.33) return "󰕿";
         if (sink.audio.volume < 0.66) return "󰖀";
         return "󰕾";
       }
       color: {
-        const sink = Pipewire.defaultAudioSink;
+        const sink = Services.AudioService.sink;
         if (!sink || !sink.audio || sink.audio.muted) return root.theme.textMuted;
         return root.theme.accentPrimary;
       }
@@ -46,7 +46,7 @@ Rectangle {
     Text {
       anchors.verticalCenter: parent.verticalCenter
       text: {
-        const sink = Pipewire.defaultAudioSink;
+        const sink = Services.AudioService.sink;
         if (!sink || !sink.audio) return "–";
         if (sink.audio.muted) return "Mute";
         return Math.round(sink.audio.volume * 100) + "%";
@@ -62,14 +62,10 @@ Rectangle {
     cursorShape: Qt.PointingHandCursor
     acceptedButtons: Qt.LeftButton
     onClicked: {
-      const sink = Pipewire.defaultAudioSink;
-      if (sink && sink.audio) sink.audio.muted = !sink.audio.muted;
+      Services.AudioService.toggleMute();
     }
     onWheel: (wheel) => {
-      const sink = Pipewire.defaultAudioSink;
-      if (!sink || !sink.audio) return;
-      const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-      sink.audio.volume = Math.max(0, Math.min(1.5, sink.audio.volume + delta));
+      Services.AudioService.adjust(wheel.angleDelta.y > 0);
     }
   }
 }

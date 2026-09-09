@@ -1,5 +1,11 @@
 # Repository Guidelines
 
+## Target Hardware and Performance
+
+- Target system: Intel Celeron N3450, 6 GB RAM, Arch Linux with Hyprland and systemd-boot.
+- The goal is a maximally lightweight and responsive setup. Prioritize low CPU and memory usage in implementation and dependency choices.
+- Avoid unnecessary background processes, frequent polling, heavy visual effects, and additional dependencies; prefer event-driven updates where practical.
+
 ## Structure and Style
 
 - `shell.qml` composes `Bar/`, `AppLauncher/`, `Notifications/`, `Osd/`, `Wallpaper/`, `MonitorManager/`, and `IdleInhibitor/`.
