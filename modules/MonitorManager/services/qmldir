@@ -1,0 +1,4 @@
+module qs.modules.MonitorManager.services
+MonitorEditorState 1.0 MonitorEditorState.qml
+singleton MonitorService 1.0 MonitorService.qml
+singleton MonitorUtils 1.0 MonitorUtils.qml

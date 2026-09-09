@@ -1,4 +1,4 @@
-import "../../../services" as Services
+import qs.services
 import QtQuick
 
 Rectangle {
@@ -10,10 +10,10 @@ Rectangle {
   width: brightContent.width + 12
   radius: 12
   color: root.theme.bgSurface
-  visible: Services.BrightnessService.available
+  visible: Brightness.available
 
   Accessible.role: Accessible.StaticText
-  Accessible.name: "Brightness: " + Math.round(Services.BrightnessService.value * 100) + "%"
+  Accessible.name: "Brightness: " + Math.round(Brightness.value * 100) + "%"
 
   Row {
     id: brightContent
@@ -30,7 +30,7 @@ Rectangle {
 
     Text {
       anchors.verticalCenter: parent.verticalCenter
-      text: Math.round(Services.BrightnessService.value * 100) + "%"
+      text: Math.round(Brightness.value * 100) + "%"
       color: root.theme.textPrimary
       font.pixelSize: 11
       font.family: root.font
@@ -41,7 +41,7 @@ Rectangle {
     anchors.fill: parent
     cursorShape: Qt.PointingHandCursor
     onWheel: (wheel) => {
-      Services.BrightnessService.adjust(wheel.angleDelta.y > 0);
+      Brightness.adjust(wheel.angleDelta.y > 0);
     }
   }
 }

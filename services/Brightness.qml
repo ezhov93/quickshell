@@ -3,6 +3,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import qs.config
 
 Singleton {
   id: root
@@ -65,7 +66,7 @@ Singleton {
   }
   // sysfs does not reliably emit filesystem notifications for external changes.
   Timer {
-    interval: 2000
+    interval: Config.brightnessPollInterval
     repeat: true
     running: root.device !== ""
     onTriggered: brightnessFile.reload()

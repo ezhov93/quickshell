@@ -1,0 +1,3 @@
+module qs.modules.AppLauncher
+AppLauncher 1.0 AppLauncher.qml
+LauncherWindow 1.0 LauncherWindow.qml

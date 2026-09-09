@@ -1,0 +1,6 @@
+module qs.services
+singleton Audio 1.0 Audio.qml
+singleton Brightness 1.0 Brightness.qml
+DirectoryScanner 1.0 DirectoryScanner.qml
+singleton HyprlandClient 1.0 HyprlandClient.qml
+TextFileWriter 1.0 TextFileWriter.qml

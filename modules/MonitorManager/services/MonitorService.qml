@@ -4,7 +4,8 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
-import "../../../services" as Services
+import qs.config
+import qs.services
 
 Singleton {
   id: root
@@ -14,7 +15,7 @@ Singleton {
   property bool saving: false
   property bool persistenceAvailable: false
   readonly property string configFormat: Hyprland.usingLua ? "lua" : "conf"
-  property string configDirectory: Quickshell.env("HOME") + "/.config/hypr"
+  property string configDirectory: Config.monitorConfigDirectory
   property var _lastEdits: []
   property bool _pendingVerify: false
   property bool refreshPending: false
@@ -96,7 +97,7 @@ Singleton {
 
   function query(callback) {
     loading = true;
-    Services.HyprlandClient.request("j/monitors all", (text, error) => {
+    HyprlandClient.request("j/monitors all", (text, error) => {
       try {
         if (error) throw new Error(error);
         monitors = normalize(JSON.parse(text));
@@ -122,7 +123,7 @@ Singleton {
     applying = true;
     _lastEdits = edits.map(m => Object.assign({}, m));
     const command = "[[BATCH]]" + _lastEdits.map(buildMonitorArg).join(" ; ");
-    Services.HyprlandClient.request(command, (text, error) => {
+    HyprlandClient.request(command, (text, error) => {
       const errors = text.split("\n").map(s => s.trim()).filter(s => s !== "" && s !== "ok");
       if (error || errors.length > 0) {
         finishApply(error || errors.join("; "));
@@ -166,7 +167,7 @@ Singleton {
       configFormat === "lua" ? buildFileContentLua(edits) : buildFileContent(edits));
   }
 
-  Services.TextFileWriter {
+  TextFileWriter {
     id: savedConfig
     onCompleted: (success, error) => {
       root.saving = false;
@@ -188,7 +189,7 @@ Singleton {
     }
     onLoadFailed: root.persistenceAvailable = false
   }
-  Timer { id: refreshDebounce; interval: 250; onTriggered: root._doRefresh() }
+  Timer { id: refreshDebounce; interval: Config.monitorRefreshDebounce; onTriggered: root._doRefresh() }
   Connections {
     target: Hyprland
     function onRawEvent(event) {

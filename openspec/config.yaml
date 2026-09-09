@@ -1,0 +1,79 @@
+schema: spec-driven
+
+context: |
+  Этот репозиторий определяет пользовательское окружение Linux как единый
+  продукт, а не только конфигурацию Quickshell или Hyprland.
+
+  Рабочее окружение собирается из существующих компонентов дистрибутива и
+  собственного кода проекта. Основные целевые системы:
+  - Arch Linux
+  - Debian
+
+  Основной compositor и shell-стек:
+  - Hyprland
+  - Quickshell
+
+  Внешние зависимости, которые проект не переimplementирует:
+  - Hyprland
+  - runtime Quickshell
+  - PipeWire и WirePlumber
+  - NetworkManager
+  - BlueZ
+  - UPower
+  - systemd
+  - xdg-desktop-portal
+  - polkit
+
+  Проект владеет:
+  - системной и прикладной конфигурацией;
+  - конфигурацией Hyprland;
+  - QML-кодом shell на Quickshell;
+  - UI/UX рабочего окружения;
+  - адаптерами интеграций;
+  - декларациями зависимостей;
+  - собственными systemd units;
+  - собственными D-Bus-контрактами;
+  - необязательными custom services и daemon;
+  - логикой установки и deployment;
+  - спецификациями ожидаемого поведения рабочего окружения.
+
+  Установленные возможности shell:
+  - панель;
+  - launcher приложений;
+  - уведомления;
+  - OSD громкости и яркости;
+  - управление обоями;
+  - управление мониторами;
+  - запрет бездействия.
+
+  Архитектурные приоритеты:
+  - низкое потребление CPU и памяти;
+  - отзывчивость на слабом оборудовании;
+  - event-driven API вместо polling, если это поддерживается;
+  - native API, IPC и D-Bus вместо shell-команд, где это возможно;
+  - минимум фоновых процессов;
+  - чёткое разделение UI, modules, services, integrations и system;
+  - изоляция Arch/Debian-специфичной логики в слоях packages и deployment;
+  - воспроизводимое системное состояние;
+  - отсутствие новых custom daemon без явного архитектурного обоснования.
+
+  Предпочтительное направление зависимостей:
+  components → modules → services → integrations → внешние системные API.
+
+  UI-компоненты не должны напрямую обращаться к системным API или запускать
+  shell-команды. Состояние и бизнес-логика должны находиться в services,
+  а integrations должны скрывать детали внешних компонентов.
+
+  OpenSpec-артефакты и проектная документация пишутся на русском языке.
+  Канонические служебные заголовки OpenSpec (Purpose, Requirements,
+  Requirement, Scenario, WHEN, THEN) сохраняются для совместимости
+  с валидатором.
+
+  Основные baseline-спеки находятся в:
+  - openspec/specs/desktop-environment/
+  - openspec/specs/architecture/
+  - openspec/specs/shell/
+  - openspec/specs/system-package-management/
+  - openspec/specs/session/
+
+  Полный архитектурный контекст находится в docs/project-context.md.

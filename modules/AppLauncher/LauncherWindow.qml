@@ -5,11 +5,12 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import "../services"
+import qs.config
+import qs.modules.AppLauncher.services
 PanelWindow {
   id: root
   required property var theme
-  property string font: "Hack Nerd Font"
+  property string font: Config.fontFamily
   signal closeRequested()
   Component.onCompleted: searchInput.forceActiveFocus()
 

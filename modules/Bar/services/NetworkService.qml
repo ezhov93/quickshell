@@ -4,7 +4,8 @@ import Quickshell
 import Quickshell.Networking
 import Quickshell.Io
 import QtQuick
-import "../../../services" as Services
+import qs.config
+import qs.services
 
 Singleton {
   id: root
@@ -49,7 +50,7 @@ Singleton {
       classification.scan(["/sys/class/net/" + route.dev]);
     }
   }
-  Services.DirectoryScanner {
+  DirectoryScanner {
     id: classification
     onFinished: entries => {
       if (!root.needsFallback || !root.route) return;
@@ -81,7 +82,7 @@ Singleton {
     }
   }
   Timer {
-    interval: 15000
+    interval: Config.networkFallbackInterval
     repeat: true
     running: root.active && root.needsFallback
     onTriggered: root.refresh()

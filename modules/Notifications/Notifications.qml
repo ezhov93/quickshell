@@ -1,6 +1,6 @@
-import "components"
-import "services"
-import"../../themes" as Themes
+import qs.config
+import qs.modules.Notifications.components
+import qs.modules.Notifications.services
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
@@ -9,8 +9,8 @@ import QtQuick.Layouts
 
 Scope {
     id: root
-    property var theme: Themes.DefaultTheme
-    property string font: "Hack Nerd Font"
+    property var theme: Theme
+    property string font: Config.fontFamily
 
     IpcHandler {
         target: "notifications"

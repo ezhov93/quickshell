@@ -1,4 +1,4 @@
-import"../../themes" as Themes
+import qs.config
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -6,8 +6,8 @@ import QtQuick
 
 Scope {
   id: root
-  property var theme: Themes.DefaultTheme
-  property string font: "Hack Nerd Font"
+  property var theme: Theme
+  property string font: Config.fontFamily
   property bool active: false
   property bool showBadge: false
 

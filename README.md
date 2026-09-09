@@ -2,7 +2,7 @@
 
 Личная конфигурация рабочего стола на [Quickshell](https://quickshell.outfoxxed.me/): панель, меню приложений, уведомления, индикаторы громкости и яркости, управление обоями и мониторами, а также режим отключения блокировки по бездействию.
 
-Модули можно использовать вместе или подключать по отдельности. Все они используют общую тему `DefaultTheme.qml`. Конфигурация подойдёт как готовый рабочий стол или отправная точка для собственной настройки. Вопросы и предложения можно оставлять в Issues репозитория.
+Модули можно использовать вместе или подключать по отдельности. Все они используют общую тему `config/Theme.qml` и настройки `config/Config.qml`, импортируемые в QML как `qs.config`. Конфигурация подойдёт как готовый рабочий стол или отправная точка для собственной настройки. Вопросы и предложения можно оставлять в Issues репозитория.
 
 ## Возможности
 
@@ -75,16 +75,16 @@ bind = SUPER, C, exec, qs ipc call idle toggle
 
 ## Подключение отдельных модулей
 
-Сохраняйте структуру репозитория: входной `shell.qml` лежит в `~/.config/quickshell/`, модули — в `~/.config/quickshell/modules/`, тема — в `~/.config/quickshell/themes/DefaultTheme.qml`. Копируйте выбранные модули целиком, вместе с `components/` и `services/`.
+Сохраняйте структуру репозитория: входной `shell.qml` лежит в `~/.config/quickshell/`, модули — в `~/.config/quickshell/modules/`, общие сервисы — в `~/.config/quickshell/services/`, а тема и настройки — в `~/.config/quickshell/config/`. Quickshell предоставляет этим каталогам root-relative namespace-импорты `qs.modules.*`, `qs.services` и `qs.config`. Копируйте выбранные модули целиком вместе с их `qmldir`, `components/` и `services/`.
 
-Для `Bar`, `Osd`, `Wallpaper` и `MonitorManager` также нужен весь корневой каталог `services/`: он содержит общие сервисы звука, яркости, файлового обхода и IPC Hyprland. Сервисы создаются по мере использования; копирование каталога не запускает их все.
+Для `Bar`, `Osd`, `Wallpaper` и `MonitorManager` также нужен каталог `services/`: он содержит общие сервисы `Audio`, `Brightness`, `DirectoryScanner`, `HyprlandClient` и `TextFileWriter`. Сервисы создаются по мере использования; копирование каталога не запускает их все.
 
 Минимальный `shell.qml` с панелью и меню приложений:
 
 ```qml
 import Quickshell
-import "modules/Bar"
-import "modules/AppLauncher"
+import qs.modules.Bar
+import qs.modules.AppLauncher
 
 Scope {
     Bar {}
@@ -96,13 +96,13 @@ Scope {
 
 | Каталог и импорт | Компонент |
 | --- | --- |
-| `modules/Bar` | `Bar {}` |
-| `modules/AppLauncher` | `AppLauncher {}` |
-| `modules/Notifications` | `NotificationPopup {}` |
-| `modules/Osd` | `OSD {}` |
-| `modules/Wallpaper` | `WallpaperManager {}` |
-| `modules/MonitorManager` | `MonitorManager {}` |
-| `modules/IdleInhibitor` | `CaffeineToggle {}` |
+| `qs.modules.Bar` | `Bar {}` |
+| `qs.modules.AppLauncher` | `AppLauncher {}` |
+| `qs.modules.Notifications` | `Notifications {}` |
+| `qs.modules.Osd` | `Osd {}` |
+| `qs.modules.Wallpaper` | `Wallpaper {}` |
+| `qs.modules.MonitorManager` | `MonitorManager {}` |
+| `qs.modules.IdleInhibitor` | `IdleInhibitor {}` |
 
 ## Работа с модулями
 
@@ -154,19 +154,20 @@ source = ~/.config/hypr/monitors.conf
 
 ### Режим бездействия
 
-`CaffeineToggle` временно запрещает блокировку и гашение экрана по бездействию — например, во время чтения. Он использует встроенный `IdleInhibitor` Quickshell и протокол Wayland `idle-inhibit`; дополнительные программы не нужны.
+`IdleInhibitor` временно запрещает блокировку и гашение экрана по бездействию — например, во время чтения. Он использует встроенный `IdleInhibitor` Quickshell и протокол Wayland `idle-inhibit`; дополнительные программы не нужны.
 
 При переключении в правом нижнем углу на две секунды появляется значок состояния. Нажатие на значок переключает режим. После перезапуска режим снова выключен.
 
 ## Настройка и структура проекта
 
-- **Цвета:** измените `themes/DefaultTheme.qml`, чтобы обновить все модули. По умолчанию используется палитра Nordic/Nord. Отдельному компоненту можно передать собственный объект через `theme`.
+- **Цвета:** измените `config/Theme.qml`, чтобы обновить все модули. По умолчанию используется палитра Nordic/Nord. Отдельному компоненту можно передать собственный объект через `theme`.
+- **Параметры:** измените `config/Config.qml`: там находятся шрифт, команда настроек сети, интервалы ресурсов, каталоги и лимит обоев, параметры уведомлений и пути MonitorManager.
 - **Шрифт:** измените свойство `font` во входном компоненте модуля или задайте его при подключении, например `Bar { font: "Your Nerd Font" }`.
 - **Расположение виджетов:** редактируйте `modules/Bar/Bar.qml`.
-- **Частота обновления статистики:** измените интервалы в `modules/Bar/services/ResourceService.qml`: CPU и память обновляются раз в две секунды, температура — раз в пять секунд. При скрытой панели опрос останавливается, при открытии возобновляется; для CPU нужны два замера.
-- **Новый модуль:** создайте каталог в `modules/` с входным QML-компонентом, добавьте `import"../../themes" as Themes` и `property var theme: Themes.DefaultTheme`, затем подключите компонент в `shell.qml`.
+- **Частота обновления статистики:** измените интервалы в `config/Config.qml`. При скрытой панели опрос останавливается, при открытии возобновляется; для CPU нужны два замера.
+- **Новый модуль:** создайте каталог в `modules/` с входным QML-компонентом и `qmldir`, импортируйте `qs.config`, затем подключите namespace-модуль в `shell.qml`.
 
-`shell.qml` объединяет модули, `themes/DefaultTheme.qml` задаёт общую палитру. Корневой `services/` содержит общие сервисы; внутри модулей UI лежит в `components/`, данные и логика — в `services/`. Окна launcher, выбора обоев и мониторов создаются через `LazyLoader` при открытии и освобождаются при закрытии; обработчики IPC остаются доступными. Конфигурация запускается напрямую в Quickshell: сборка и пакетный менеджер не требуются.
+`shell.qml` объединяет модули через `qs.modules.*`, `config/Theme.qml` задаёт общую палитру, а `config/Config.qml` — пользовательские параметры. Общие сервисы находятся в `services/`; внутри модулей UI лежит в `components/`, данные и логика — в `services/`. Окна launcher, выбора обоев и мониторов создаются через `LazyLoader` при открытии и освобождаются при закрытии; обработчики IPC остаются доступными. Конфигурация запускается напрямую в Quickshell: сборка и пакетный менеджер не требуются.
 
 После изменений запустите конфигурацию в сессии Hyprland, проверьте изменённый модуль и сообщения об ошибках QML. Синтаксис установщика можно проверить командой `bash -n "install.sh"`. Файлы состояния `wallpaper.conf` и `monitor-manager.conf` не следует добавлять в Git.
 

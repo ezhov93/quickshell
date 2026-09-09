@@ -3,7 +3,8 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import QtQuick
-import "../../../services" as Services
+import qs.config
+import qs.services
 
 Singleton {
   id: root
@@ -77,19 +78,19 @@ Singleton {
     onLoadFailed: Qt.callLater(root.nextTemperatureSensor)
   }
   Timer {
-    interval: 2000
+    interval: Config.resourceCpuInterval
     running: root.active
     repeat: true
     onTriggered: { cpuFile.reload(); memoryFile.reload(); }
   }
   Timer {
-    interval: 5000
+    interval: Config.resourceTemperatureInterval
     running: root.active && temperatureFile.path !== ""
     repeat: true
     onTriggered: temperatureFile.reload()
   }
 
-  Services.DirectoryScanner {
+  DirectoryScanner {
     id: discovery
     onFinished: entries => {
       root.sensorQueue = entries.filter(e => e.isDir && /^(thermal_zone|hwmon)\d+$/.test(e.name));

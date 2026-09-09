@@ -1,6 +1,7 @@
 pragma Singleton
 
-import "../../../services" as Services
+import qs.config
+import qs.services
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -17,11 +18,11 @@ Singleton {
 
   property bool scanned: false
   property bool saving: false
-  Services.DirectoryScanner {
+  DirectoryScanner {
     id: scanner
     onFinished: entries => {
       const paths = entries.filter(e => !e.isDir && /\.(jpg|jpeg|png|webp)$/i.test(e.name)).map(e => e.path);
-      root.wallpapers = [...new Set(paths)].sort().slice(0, 200);
+      root.wallpapers = [...new Set(paths)].sort().slice(0, Config.wallpaperMaxCount);
       root.scanned = true;
     }
   }
@@ -29,7 +30,7 @@ Singleton {
   // Load saved wallpaper path
   FileView {
     id: configFile
-    path: Quickshell.env("HOME") + "/.config/quickshell/wallpaper.conf"
+    path: Config.wallpaperConfigPath
     blockLoading: false
     // No saved wallpaper is normal on the first run.
     printErrors: false
@@ -46,7 +47,7 @@ Singleton {
     }
   }
 
-  Services.TextFileWriter {
+  TextFileWriter {
     id: configWriter
     onCompleted: (success, error) => {
       root.saving = false;
@@ -58,7 +59,7 @@ Singleton {
   }
 
   function rescan() {
-    scanner.scan([Quickshell.env("HOME") + "/Pictures/Wallpapers", Quickshell.env("HOME") + "/Pictures"], 2);
+    scanner.scan(Config.wallpaperDirectories, 2);
   }
 
   function setWallpaper(path, restoring = false) {

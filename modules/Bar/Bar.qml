@@ -1,16 +1,16 @@
-import "components"
-import "services"
-import "../../themes" as Themes
+import qs.config
+import qs.modules.Bar.components
+import qs.modules.Bar.services
 import Quickshell
 import QtQuick
 import Quickshell.Hyprland
 import Quickshell.Io
 Scope {
   id: root
-  property var theme: Themes.DefaultTheme
-  property string font: "Hack Nerd Font"
+  property var theme: Theme
+  property string font: Config.fontFamily
   property bool barVisible: true
-  property list<string> networkSettingsCommand: ["x-terminal-emulator", "-e", "nmtui"]
+  property list<string> networkSettingsCommand: Config.networkSettingsCommand
 
   Process {
     id: networkSettingsProc

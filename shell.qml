@@ -8,20 +8,20 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-import "modules/Bar"
-import "modules/AppLauncher"
-import "modules/Notifications"
-import "modules/Wallpaper"
-import "modules/Osd"
-import "modules/MonitorManager"
-import "modules/IdleInhibitor"
+import qs.modules.Bar
+import qs.modules.AppLauncher
+import qs.modules.Notifications
+import qs.modules.Wallpaper
+import qs.modules.Osd
+import qs.modules.MonitorManager
+import qs.modules.IdleInhibitor
 
 Scope {
   Bar {}
   AppLauncher {}
-  NotificationPopup {}
-  WallpaperManager {}
-  OSD {}
+  Notifications {}
+  Wallpaper {}
+  Osd {}
   MonitorManager {}
-  CaffeineToggle {}
+  IdleInhibitor {}
 }

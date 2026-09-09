@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
+import qs.config
 
 Singleton {
     id: root
@@ -54,7 +55,7 @@ Singleton {
 
             root.notifications = [data, ...root.notifications];
 
-            if (root.notifications.length > 5) {
+            if (root.notifications.length > Config.notificationMaxCount) {
                 root.notifications[root.notifications.length - 1].dismiss();
             }
         }

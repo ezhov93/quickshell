@@ -1,5 +1,5 @@
-import "../../services" as Services
-import"../../themes" as Themes
+import qs.config
+import qs.services
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
@@ -7,26 +7,26 @@ import QtQuick.Layouts
 
 Scope {
   id: root
-  property var theme: Themes.DefaultTheme
-  property string font: "Hack Nerd Font"
+  property var theme: Theme
+  property string font: Config.fontFamily
 
   property bool showVolume: false
   property bool showBrightness: false
-  readonly property real volumeValue: Services.AudioService.volume
-  readonly property bool volumeMuted: Services.AudioService.muted
-  readonly property real brightnessValue: Services.BrightnessService.value
+  readonly property real volumeValue: Audio.volume
+  readonly property bool volumeMuted: Audio.muted
+  readonly property real brightnessValue: Brightness.value
 
   Connections {
-    target: Services.AudioService
+    target: Audio
     function onVolumeChanged() { root.showAudio(); }
     function onMutedChanged() { root.showAudio(); }
     function onAvailableChanged() {
-      if (!Services.AudioService.available) root.showVolume = false;
+      if (!Audio.available) root.showVolume = false;
     }
   }
 
   function showAudio() {
-    if (!Services.AudioService.available) return;
+    if (!Audio.available) return;
     showVolume = true;
     volumeHideTimer.restart();
   }
@@ -38,7 +38,7 @@ Scope {
   }
 
   Connections {
-    target: Services.BrightnessService
+    target: Brightness
     function onUpdated() {
       root.showBrightness = true;
       brightnessHideTimer.restart();

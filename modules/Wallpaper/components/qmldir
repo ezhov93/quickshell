@@ -1,0 +1,4 @@
+module qs.modules.Wallpaper.components
+WallpaperPreview 1.0 WallpaperPreview.qml
+WallpaperTile 1.0 WallpaperTile.qml
+WallpaperWindow 1.0 WallpaperWindow.qml

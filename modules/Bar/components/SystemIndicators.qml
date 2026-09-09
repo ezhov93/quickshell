@@ -1,5 +1,5 @@
-import "../services"
 import QtQuick
+import qs.modules.Bar.services
 
 Row {
   id: root

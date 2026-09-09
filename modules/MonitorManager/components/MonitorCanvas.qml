@@ -1,5 +1,5 @@
-import "../services"
 import QtQuick
+import qs.modules.MonitorManager.services
 
 Item {
   id: canvas

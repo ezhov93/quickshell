@@ -1,0 +1,6 @@
+module qs.modules.MonitorManager.components
+Divider 1.0 Divider.qml
+MonitorCanvas 1.0 MonitorCanvas.qml
+MonitorPanel 1.0 MonitorPanel.qml
+MonitorTile 1.0 MonitorTile.qml
+MonitorWindow 1.0 MonitorWindow.qml

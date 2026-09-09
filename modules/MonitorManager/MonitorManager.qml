@@ -1,14 +1,14 @@
-import "components"
-import "services"
-import"../../themes" as Themes
+import qs.config
+import qs.modules.MonitorManager.components
+import qs.modules.MonitorManager.services
 import Quickshell
 import Quickshell.Io
 
 Scope {
   id: root
 
-  property var  theme: Themes.DefaultTheme
-  property string font: "Hack Nerd Font"
+  property var  theme: Theme
+  property string font: Config.fontFamily
 
   MonitorEditorState { id: editorState }
 

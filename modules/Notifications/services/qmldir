@@ -1,0 +1,3 @@
+module qs.modules.Notifications.services
+NotificationData 1.0 NotificationData.qml
+singleton NotificationService 1.0 NotificationService.qml

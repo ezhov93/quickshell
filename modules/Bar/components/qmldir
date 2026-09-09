@@ -1,0 +1,7 @@
+module qs.modules.Bar.components
+BrightnessWidget 1.0 BrightnessWidget.qml
+MediaWidget 1.0 MediaWidget.qml
+SystemIndicators 1.0 SystemIndicators.qml
+TrayWidget 1.0 TrayWidget.qml
+VolumeWidget 1.0 VolumeWidget.qml
+WorkspaceList 1.0 WorkspaceList.qml

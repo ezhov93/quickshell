@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Services.Notifications
+import qs.config
 
 QtObject {
     id: notificationData
@@ -19,7 +20,7 @@ QtObject {
     readonly property int urgency: notification?.urgency ?? NotificationUrgency.Normal
     readonly property real expireTimeout: notification && notification.expireTimeout > 0 ? notification.expireTimeout : defaultTimeout
     property bool hovered: false
-    readonly property int defaultTimeout: 5000
+    readonly property int defaultTimeout: Config.notificationDefaultTimeout
 
     readonly property Connections _conn: Connections {
         target: notificationData.notification

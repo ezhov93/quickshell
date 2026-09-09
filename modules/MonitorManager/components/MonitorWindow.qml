@@ -1,4 +1,7 @@
-import "../services"
+import qs.config
+import qs.components
+import qs.modules.MonitorManager.components
+import qs.modules.MonitorManager.services
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
@@ -8,7 +11,7 @@ PanelWindow {
   id: root
   required property var theme
   required property MonitorEditorState editor
-  property string font: "Hack Nerd Font"
+  property string font: Config.fontFamily
 
   visible: editor.isOpen
   focusable: true
@@ -22,10 +25,10 @@ PanelWindow {
 
   anchors { top: true; bottom: true; left: true; right: true }
 
-  // Poll for external hyprctl keyword changes — declared here so canvas id is in scope
+  // Poll for external Hyprland changes while the editor is open.
   Timer {
     id: externalChangePollTimer
-    interval: 3000
+    interval: Config.monitorExternalPollInterval
     repeat: true
     running: editor.isOpen
              && !MonitorService.loading

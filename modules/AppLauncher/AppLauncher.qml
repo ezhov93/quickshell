@@ -1,17 +1,13 @@
-import "components"
-import "services"
-import"../../themes" as Themes
+import qs.config
+import qs.modules.AppLauncher.services
 import Quickshell
 import Quickshell.Io
 
 Scope {
   id: root
-  property var theme: Themes.DefaultTheme
-  property string font: "Hack Nerd Font"
+  property var theme: Theme
+  property string font: Config.fontFamily
   property bool isOpen: false
-  // Keep the application index alive when the window is unloaded.
-  readonly property var searchIndex: SearchIndex.entries
-
   IpcHandler {
     target: "launcher"
     function toggle(): void { root.isOpen = !root.isOpen; }

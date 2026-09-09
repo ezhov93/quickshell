@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
+import qs.config
 
 Singleton {
   id: root
@@ -68,7 +69,7 @@ Singleton {
       }
       Timer {
         id: timeout
-        interval: 3000
+        interval: Config.monitorApplyVerifyTimeout
         onTriggered: job.finish("", "Hyprland request timed out")
       }
     }

@@ -1,0 +1,2 @@
+module qs.modules.Wallpaper.services
+singleton WallpaperService 1.0 WallpaperService.qml

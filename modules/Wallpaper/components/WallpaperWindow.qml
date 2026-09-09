@@ -1,4 +1,5 @@
-import "../services"
+import qs.config
+import qs.modules.Wallpaper.services
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
@@ -7,7 +8,7 @@ import QtQuick.Layouts
 PanelWindow {
   id: root
   required property var theme
-  property string font: "Hack Nerd Font"
+  property string font: Config.fontFamily
   signal closeRequested()
   onVisibleChanged: if (!visible) previewPath = ""
   Component.onCompleted: searchInput.forceActiveFocus()

@@ -1,0 +1,2 @@
+module qs.modules.AppLauncher.services
+singleton SearchIndex 1.0 SearchIndex.qml

@@ -1,7 +1,7 @@
 import Quickshell
 import Quickshell.Hyprland
 import QtQuick
-import "../../../services" as Services
+import qs.services
 
 Scope {
   id: root
@@ -21,7 +21,7 @@ Scope {
   function refresh() {
     if (loading) { pending = true; return; }
     loading = true;
-    Services.HyprlandClient.request("j/devices", (text, error) => {
+    HyprlandClient.request("j/devices", (text, error) => {
       try {
         if (error) throw new Error(error);
         const keyboards = JSON.parse(text).keyboards || [];
