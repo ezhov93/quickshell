@@ -21,9 +21,9 @@ feature/refactor-project-layout
 
 ## Рабочий цикл OpenSpec change
 
-1. Создать или выбрать OpenSpec change.
-2. Обновить `develop`.
-3. Создать `feature/<change-name>` от `develop`.
+1. Синхронизировать `develop`.
+2. Создать OpenSpec change и сразу ветку `feature/<change-name>` от актуального `develop`.
+3. Писать proposal/spec/design/tasks и код только в этой feature-ветке.
 4. Выполнять пункты `tasks.md` в этой ветке и отмечать их после проверки.
 5. Выполнить проверки change и ручные проверки владельца сессии.
 6. Архивировать завершённый change.
@@ -34,6 +34,8 @@ feature/refactor-project-layout
 11. Проверить, что итоговый squash-коммит присутствует в `develop`, и только после этого удалить feature-ветку локально и удалённо.
 
 Целевой способ feature → `develop` — `merge --squash`; fast-forward для этого перехода не используется. При ошибке push или невозможности подтвердить merge ветки не удаляются.
+
+Создание change и создание его feature-ветки — один начальный этап. Change не создаётся в общей ветке и не переносится в feature-ветку постфактум.
 
 Push в `develop` и `main` в обход согласованного merge запрещены политикой проекта. Разрешён только push результата проверенного squash merge; пока remote protection не настроен, это правило выполняется вручную.
 
