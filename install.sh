@@ -15,23 +15,73 @@ if (( EUID == 0 )); then
 fi
 
 source_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+runtime_source="$source_dir/shell"
 config_dir="$HOME/.config"
 target="$config_dir/quickshell"
 
-# Проверка зависимостей
-for dependency in quickshell hyprctl; do
-  if ! command -v "$dependency" >/dev/null 2>&1; then
-    printf 'Required to run the config: %s (not installed).\n' "$dependency" >&2
+runtime_directories=(config components services modules)
+required_sources=(
+  shell.qml
+  qmldir
+  config/qmldir
+  components/qmldir
+  services/qmldir
+  modules/qmldir
+)
+
+check_dependencies() {
+  local dependency
+
+  for dependency in quickshell hyprctl; do
+    if ! command -v "$dependency" >/dev/null 2>&1; then
+      printf 'Required to run the config: %s (not installed).\n' "$dependency" >&2
+    fi
+  done
+
+  for dependency in brightnessctl NetworkManager upower ip nmtui; do
+    command -v "$dependency" >/dev/null 2>&1 || printf 'Optional dependency missing: %s\n' "$dependency"
+  done
+
+  if ! command -v hyprpaper >/dev/null 2>&1; then
+    printf 'Wallpaper support requires hyprpaper 0.8 or newer.\n'
   fi
-done
+}
 
-for dependency in brightnessctl NetworkManager upower ip nmtui; do
-  command -v "$dependency" >/dev/null 2>&1 || printf 'Optional dependency missing: %s\n' "$dependency"
-done
+validate_source_tree() {
+  local relative
 
-if ! command -v hyprpaper >/dev/null 2>&1; then
-  printf 'Wallpaper support requires hyprpaper 0.8 or newer.\n'
-fi
+  for relative in "${required_sources[@]}"; do
+    if [[ ! -f "$runtime_source/$relative" ]]; then
+      printf 'Required shell source is missing: %s\n' "$relative" >&2
+      return 1
+    fi
+  done
+}
+
+copy_runtime_file() {
+  local relative=$1
+  local destination="$stage/$relative"
+
+  mkdir -p -- "$(dirname -- "$destination")"
+  cp -- "$runtime_source/$relative" "$destination"
+  printf '  Copied: %s\n' "$relative"
+}
+
+copy_runtime_tree() {
+  local runtime_directory
+  local file
+
+  copy_runtime_file shell.qml
+  copy_runtime_file qmldir
+  for runtime_directory in "${runtime_directories[@]}"; do
+    while IFS= read -r -d '' file; do
+      copy_runtime_file "${file#"$runtime_source/"}"
+    done < <(find "$runtime_source/$runtime_directory" -type f \( -name '*.qml' -o -name 'qmldir' \) -print0)
+  done
+}
+
+check_dependencies
+validate_source_tree
 
 mkdir -p -- "$config_dir"
 
@@ -58,20 +108,9 @@ trap 'exit 143' TERM
 
 printf 'Requires Quickshell 0.3.1+ with Networking, UPower, PipeWire and Qt.labs.folderlistmodel.\n'
 
-# Находим и копируем QML-файлы и описатели локальных модулей, сохраняя структуру
-echo "Copying QML files and qmldir manifests from $source_dir..."
-find "$source_dir" -type f \( -name '*.qml' -o -name 'qmldir' \) -print0 | while IFS= read -r -d '' file; do
-  relative="${file#"$source_dir/"}"
-  dest="$stage/$relative"
-  mkdir -p -- "$(dirname -- "$dest")"
-  cp -- "$file" "$dest"
-  echo "  Copied: $relative"
-done
-
-# Проверяем, найдены ли какие-либо QML-файлы
-if [[ -z "$(find "$source_dir" -type f -name '*.qml' -print -quit)" ]]; then
-  echo "Warning: No QML files found in $source_dir" >&2
-fi
+# Копируем только runtime-дерево оболочки, сохраняя относительные пути.
+printf 'Copying shell runtime files from %s...\n' "$runtime_source"
+copy_runtime_tree
 
 # Бэкап существующей конфигурации
 if [[ -e "$target" || -L "$target" ]]; then

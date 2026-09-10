@@ -70,6 +70,55 @@ quickshell -p "$HOME/.config/quickshell"
 - корректное применение общей темы;
 - отсутствие регрессий при подключении отдельных модулей.
 
+### Изолированная offscreen-самопроверка Quickshell
+
+До ручной проверки можно проверить QML-сервисы, импорты и компоненты, которым не нужен оконный backend. Эта процедура не запускает Hyprland, не использует пользовательский `~/.config/quickshell` и не заменяет runtime-проверку `PanelWindow`.
+
+Проверки структуры репозитория должны отдельно подтверждать, что `shell/` остаётся самостоятельным runtime, а будущие `configs/`, `packages/`, `system/`, корневой `services/` и `install/` не объявлены реализованными только по плану. Материалы в `extra/` проверяются как переходные примеры до их отдельной миграции.
+
+1. Создать временное дерево и скопировать в него только runtime-каталоги:
+
+```bash
+check_root=$(mktemp -d /tmp/quickshell-offscreen.XXXXXXXX)
+mkdir -p "$check_root/config" "$check_root/runtime" "$check_root/cache"
+chmod 700 "$check_root/runtime"
+cp -a shell/qmldir shell/config shell/components shell/services shell/modules "$check_root/config/"
+```
+
+2. Создать в `$check_root/config/shell.qml` минимальный harness. Он импортирует изменённые локальные модули и обращается к проверяемым singleton-сервисам. Неоконные компоненты можно создать внутри `Item`, передав все `required property`. Типы на основе `PanelWindow` в offscreen-harness не создаются.
+
+Пример для сервисов Bar:
+
+```qml
+import Quickshell
+import QtQuick
+
+import qs.modules.Bar.services
+
+Scope {
+  property var workspaceService: WorkspaceService
+  property var mediaService: MediaService
+  property var trayService: TrayService
+}
+```
+
+3. Запустить harness без графического display и с отдельными XDG runtime/cache:
+
+```bash
+timeout 5s env -u DISPLAY -u WAYLAND_DISPLAY \
+  QT_QPA_PLATFORM=offscreen \
+  QT_QPA_PLATFORMTHEME= \
+  XDG_CACHE_HOME="$check_root/cache" \
+  XDG_RUNTIME_DIR="$check_root/runtime" \
+  quickshell -p "$check_root/config" --no-color
+```
+
+Результат считается пройденным, если журнал содержит `INFO: Configuration Loaded`, не содержит ошибок QML/import/type и процесс работает до `timeout` (код 124 допустим). Предупреждения о намеренно недоступных D-Bus, MPRIS, SystemTray или Hyprland записываются как ограничения среды, а не скрываются.
+
+`No PanelWindow backend loaded` при попытке создать полный shell без Wayland означает `заблокировано`, а не успешную проверку и не доказанную регрессию. Ошибки вида `Type ... unavailable`, `... is not a type`, ошибки parser/binding и отсутствие `Configuration Loaded` означают `не пройдено`.
+
+Если проверяется временная копия настоящего `shell.qml`, pragma `QT_QPA_PLATFORMTHEME=gtk3` можно удалить только из временного файла, иначе GTK попытается открыть пользовательский display. Исходный `shell.qml` менять ради offscreen-проверки нельзя. Агент не должен запускать, блокировать или перезапускать пользовательскую графическую сессию.
+
 ### IPC и клавиатурное управление
 
 Изменённые IPC targets проверяются при запущенном shell. Используются команды, которые уже описаны в проекте:
@@ -79,9 +128,7 @@ qs ipc call launcher toggle
 qs ipc call wallpaper toggle
 qs ipc call monitors toggle
 qs ipc call monitors refresh
-qs ipc call notifications dismiss_all
 qs ipc call notifications dnd_toggle
-qs ipc call idle toggle
 qs ipc call idle enable
 qs ipc call idle disable
 qs ipc call bar toggle
@@ -116,7 +163,7 @@ qs ipc call bar toggle
 - одновременно удерживается не больше настроенного предела уведомлений (текущее значение по умолчанию — пять);
 - обычные уведомления при отсутствии hover закрываются по таймеру, критические — нет;
 - тело с markup проверяется отдельно: сейчас сервер заявляет поддержку, но карточка отображает plain text, поэтому этот сценарий нельзя отмечать пройденным;
-- работают закрытие карточки и `dismiss_all`;
+- работают закрытие карточки; `dismiss_all` и его hotkey отложены для отдельной проверки необходимости;
 - Do Not Disturb не показывает новые уведомления.
 
 #### Osd, Audio и Brightness
@@ -149,7 +196,7 @@ qs ipc call bar toggle
 
 #### IdleInhibitor
 
-- toggle, enable и disable работают через IPC;
+- `enable` и `disable` через IPC остаются доступными для будущей отдельной проверки; hotkey `idle toggle` отложен;
 - badge появляется при изменении состояния;
 - настроенная idle-политика сессии учитывает Wayland idle-inhibit; явная блокировка пользователем проверяется отдельно и не должна считаться запрещённой;
 - после перезапуска shell режим снова выключен.
