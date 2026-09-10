@@ -1,15 +1,9 @@
 import qs.services
 import QtQuick
 
-Rectangle {
+BarButton {
   id: root
-  required property var theme
-  required property string font
-
-  height: 24
   width: brightContent.width + 12
-  radius: 12
-  color: root.theme.bgSurface
   visible: Brightness.available
 
   Accessible.role: Accessible.StaticText
@@ -37,11 +31,6 @@ Rectangle {
     }
   }
 
-  MouseArea {
-    anchors.fill: parent
-    cursorShape: Qt.PointingHandCursor
-    onWheel: (wheel) => {
-      Brightness.adjust(wheel.angleDelta.y > 0);
-    }
-  }
+  onWheelUp: Brightness.adjust(true)
+  onWheelDown: Brightness.adjust(false)
 }

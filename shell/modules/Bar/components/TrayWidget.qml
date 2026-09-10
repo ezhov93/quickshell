@@ -4,15 +4,11 @@ import Quickshell
 import Quickshell.Widgets
 import qs.modules.Bar.services
 
-Rectangle {
+BarButton {
   id: root
-  required property var theme
-  required property string font
-
   implicitHeight: 24
   implicitWidth: trayIcons.implicitWidth + 4
-  radius: 12
-  color: root.theme.bgSurface
+  interactive: false
 
   RowLayout {
     id: trayIcons

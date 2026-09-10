@@ -9,6 +9,7 @@
 ### Added
 
 - Документирован rolling Gitflow и связь OpenSpec change с feature-веткой.
+- Добавлен общий UI-компонент `BarButton` для капсул и интерактивных элементов панели.
 
 ### Changed
 
