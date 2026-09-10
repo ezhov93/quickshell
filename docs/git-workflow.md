@@ -8,7 +8,7 @@
 |---|---|---|---|
 | `main` | Последний стабильный релиз | текущий стабильный commit | релизный тег |
 | `develop` | Интеграция разработки | актуальный `main` при создании, затем предыдущий `develop` | проверенный набор изменений |
-| `feature/<change-name>` | Один OpenSpec change | актуальный `develop` | PR в `develop` |
+| `feature/<change-name>` | Один OpenSpec change | актуальный `develop` | squash merge в `develop` |
 | `hotfix/<version>-<slug>` | Срочное исправление стабильного релиза | `main` | merge в `main` и обратно в `develop` |
 
 Отдельные ветки для пунктов `tasks.md` не создаются. Все пункты одного OpenSpec change выполняются в его единственной feature-ветке.
@@ -26,18 +26,26 @@ feature/refactor-project-layout
 3. Создать `feature/<change-name>` от `develop`.
 4. Выполнять пункты `tasks.md` в этой ветке и отмечать их после проверки.
 5. Выполнить проверки change и ручные проверки владельца сессии.
-6. Открыть PR в `develop`, указав change, задачи, проверки и известные пробелы.
-7. После merge удалить feature-ветку.
+6. Архивировать завершённый change.
+7. Опубликовать feature-ветку: `git push -u origin feature/<change-name>`.
+8. Открыть PR в `develop`, указав change, задачи, проверки и известные пробелы.
+9. Влить PR в `develop` только через squash merge. Локальный эквивалент: `git merge --squash feature/<change-name>` с одним итоговым commit.
+10. Опубликовать результат: `git push origin develop`.
+11. Проверить, что итоговый squash-коммит присутствует в `develop`, и только после этого удалить feature-ветку локально и удалённо.
 
-Прямые push в `develop` и `main` запрещены политикой проекта. Пока remote protection не настроен, это правило выполняется вручную.
+Целевой способ feature → `develop` — `merge --squash`; fast-forward для этого перехода не используется. При ошибке push или невозможности подтвердить merge ветки не удаляются.
+
+Push в `develop` и `main` в обход согласованного merge запрещены политикой проекта. Разрешён только push результата проверенного squash merge; пока remote protection не настроен, это правило выполняется вручную.
 
 ## Rolling-релиз
 
-Релиз выполняется без release-ветки:
+Релиз выполняется без release-ветки. После release checklist и проверки `develop` переносится в `main` через squash merge, затем публикуется `main`, создаётся аннотированный тег и публикуется тег:
 
 ```text
 feature/<change> → develop → main → vMAJOR.MINOR.PATCH
 ```
+
+Локальная последовательность для релиза: `git switch main`, `git merge --squash develop`, итоговый commit, `git push origin main`, `git tag -a vMAJOR.MINOR.PATCH`, `git push origin vMAJOR.MINOR.PATCH`.
 
 Перед переносом `develop` в `main` требуется release checklist, зелёные проверки и обновлённый `CHANGELOG.md`. Тег создаётся на том же commit `main` и является аннотированным.
 
