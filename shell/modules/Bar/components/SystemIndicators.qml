@@ -96,8 +96,8 @@ Row {
     Accessible.role: Accessible.Button
     Accessible.name: {
       if (NetworkService.type === "ethernet") return "Network: Ethernet"
-      if (NetworkService.type === "wifi") return "Network: WiFi " + NetworkService.name
-      return "Network: " + NetworkService.name
+      if (NetworkService.type === "wifi") return "Network: WiFi"
+      return "Network: " + NetworkService.type
     }
     Accessible.description: "Open network settings (nmtui)"
     Accessible.onPressAction: indicatorsRoot.openNetworkSettings()
@@ -116,13 +116,6 @@ Row {
         }
         color: NetworkService.type === "disconnected" ? indicatorsRoot.theme.textMuted : indicatorsRoot.theme.accentGreen
         font.pixelSize: 14
-        font.family: indicatorsRoot.font
-      }
-      Text {
-        anchors.verticalCenter: parent.verticalCenter
-        text: NetworkService.name
-        color: indicatorsRoot.theme.textPrimary
-        font.pixelSize: 11
         font.family: indicatorsRoot.font
       }
     }
