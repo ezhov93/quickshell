@@ -5,19 +5,19 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 Scope {
-  id: root
+  id: barRoot
   property var theme: Theme
   property string font: Config.fontFamily
   property bool barVisible: true
 
-  Binding { target: ResourceService; property: "active"; value: root.barVisible }
-  Binding { target: NetworkService; property: "active"; value: root.barVisible }
+  Binding { target: ResourceService; property: "active"; value: barRoot.barVisible }
+  Binding { target: NetworkService; property: "active"; value: barRoot.barVisible }
 
   KeyboardLayout { id: keyboardLayout }
 
   IpcHandler {
     target: "bar"
-    function toggle(): void { root.barVisible = !root.barVisible; }
+    function toggle(): void { barRoot.barVisible = !barRoot.barVisible; }
   }
 
   Variants {
@@ -26,7 +26,7 @@ Scope {
     PanelWindow {
       required property var modelData
       screen: modelData
-      visible: root.barVisible
+      visible: barRoot.barVisible
 
       anchors {
         top: true
@@ -35,7 +35,7 @@ Scope {
       }
 
       implicitHeight: 32
-      color: root.theme.bgBase
+      color: barRoot.theme.bgBase
 
       Item {
         anchors.fill: parent
@@ -51,8 +51,8 @@ Scope {
 
           // Workspaces
           WorkspaceList {
-            theme: root.theme
-            font: root.font
+            theme: barRoot.theme
+            font: barRoot.font
           }
 
         }
@@ -69,9 +69,9 @@ Scope {
             Accessible.role: Accessible.StaticText
             Accessible.name: "Active window: " + text
             text: WorkspaceService.activeWindowTitle
-            color: root.theme.textPrimary
+            color: barRoot.theme.textPrimary
             font.pixelSize: 13
-            font.family: root.font
+            font.family: barRoot.font
             elide: Text.ElideRight
             width: Math.max(0, Math.min(implicitWidth, parent.width))
             anchors.left: parent.left
@@ -91,41 +91,40 @@ Scope {
           // https://github.com/quickshell-mirror/quickshell/issues/26
           // https://github.com/quickshell-mirror/quickshell/pull/777
           TrayWidget {
-            theme: root.theme
-            font: root.font
+            theme: barRoot.theme
+            font: barRoot.font
           }
 
           // Now Playing
           MediaWidget {
-            theme: root.theme
-            font: root.font
+            theme: barRoot.theme
+            font: barRoot.font
           }
 
           // Volume
           VolumeWidget {
-            theme: root.theme
-            font: root.font
+            theme: barRoot.theme
+            font: barRoot.font
           }
 
           // Brightness
           BrightnessWidget {
-            theme: root.theme
-            font: root.font
+            theme: barRoot.theme
+            font: barRoot.font
           }
 
           // System Info
           SystemIndicators {
-            theme: root.theme
-            font: root.font
+            theme: barRoot.theme
+            font: barRoot.font
             onOpenNetworkSettings: NetworkService.openSettings()
           }
 
           // Keyboard layout of Hyprland's main keyboard
-          Rectangle {
-            height: 24
+          BarButton {
+            theme: barRoot.theme
+            font: barRoot.font
             width: layoutText.implicitWidth + 16
-            radius: 12
-            color: root.theme.bgSurface
             visible: keyboardLayout.label !== ""
 
             Accessible.role: Accessible.StaticText
@@ -135,19 +134,18 @@ Scope {
               id: layoutText
               anchors.centerIn: parent
               text: keyboardLayout.label
-              color: root.theme.accentPrimary
+              color: barRoot.theme.accentPrimary
               font.pixelSize: 11
-              font.family: root.font
+              font.family: barRoot.font
               font.bold: true
             }
           }
 
           // Time
-          Rectangle {
-            height: 24
+          BarButton {
+            theme: barRoot.theme
+            font: barRoot.font
             width: timeDate.width + 16
-            radius: 12
-            color: root.theme.bgSurface
 
             Row {
               id: timeDate
@@ -157,25 +155,25 @@ Scope {
               Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: ""
-                color: root.theme.accentPrimary
+                color: barRoot.theme.accentPrimary
                 font.pixelSize: 14
-                font.family: root.font
+                font.family: barRoot.font
               }
 
               Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: Time.dateString
-                color: root.theme.textPrimary
+                color: barRoot.theme.textPrimary
                 font.pixelSize: 12
-                font.family: root.font
+                font.family: barRoot.font
               }
 
               Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: Time.timeString
-                color: root.theme.textSecondary
+                color: barRoot.theme.textSecondary
                 font.pixelSize: 12
-                font.family: root.font
+                font.family: barRoot.font
               }
             }
           }

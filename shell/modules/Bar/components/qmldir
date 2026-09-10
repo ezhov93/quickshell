@@ -1,4 +1,5 @@
 module qs.modules.Bar.components
+BarButton 1.0 BarButton.qml
 BrightnessWidget 1.0 BrightnessWidget.qml
 MediaWidget 1.0 MediaWidget.qml
 SystemIndicators 1.0 SystemIndicators.qml

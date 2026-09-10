@@ -2,7 +2,7 @@ import QtQuick
 import qs.modules.Bar.services
 
 Row {
-  id: root
+  id: indicatorsRoot
   required property var theme
   required property string font
   signal openNetworkSettings()
@@ -18,22 +18,22 @@ Row {
 
 
   readonly property color batteryColor: {
-    if (BatteryService.charging) return root.theme.accentGreen;
-    if (Math.round(BatteryService.charge * 100) > 20) return root.theme.batteryGood;
-    if (Math.round(BatteryService.charge * 100) > 10) return root.theme.batteryWarning;
-    return root.theme.batteryCritical;
+    if (BatteryService.charging) return indicatorsRoot.theme.accentGreen;
+    if (Math.round(BatteryService.charge * 100) > 20) return indicatorsRoot.theme.batteryGood;
+    if (Math.round(BatteryService.charge * 100) > 10) return indicatorsRoot.theme.batteryWarning;
+    return indicatorsRoot.theme.batteryCritical;
   }
 
   spacing: 4
 
   // CPU
-  Rectangle {
-    height: 24
+  BarButton {
+    interactive: false
+    theme: indicatorsRoot.theme
+    font: indicatorsRoot.font
     width: cpuContent.width + 12
-    radius: 12
-    color: root.theme.bgSurface
     Accessible.role: Accessible.StaticText
-    Accessible.name: "CPU: " + root.cpuLabel
+    Accessible.name: "CPU: " + indicatorsRoot.cpuLabel
 
     Row {
       id: cpuContent
@@ -43,28 +43,28 @@ Row {
       Text {
         anchors.verticalCenter: parent.verticalCenter
         text: "󰻠"
-        color: root.theme.accentOrange
+        color: indicatorsRoot.theme.accentOrange
         font.pixelSize: 14
-        font.family: root.font
+        font.family: indicatorsRoot.font
       }
       Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: root.cpuLabel
-        color: root.theme.textPrimary
+        text: indicatorsRoot.cpuLabel
+        color: indicatorsRoot.theme.textPrimary
         font.pixelSize: 11
-        font.family: root.font
+        font.family: indicatorsRoot.font
       }
     }
   }
 
   // Temperature
-  Rectangle {
-    height: 24
+  BarButton {
+    interactive: false
+    theme: indicatorsRoot.theme
+    font: indicatorsRoot.font
     width: tempContent.width + 12
-    radius: 12
-    color: root.theme.bgSurface
     Accessible.role: Accessible.StaticText
-    Accessible.name: "Temperature: " + root.temperatureLabel
+    Accessible.name: "Temperature: " + indicatorsRoot.temperatureLabel
 
     Row {
       id: tempContent
@@ -74,26 +74,25 @@ Row {
       Text {
         anchors.verticalCenter: parent.verticalCenter
         text: "󰔏"
-        color: root.theme.accentRed
+        color: indicatorsRoot.theme.accentRed
         font.pixelSize: 14
-        font.family: root.font
+        font.family: indicatorsRoot.font
       }
       Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: root.temperatureLabel
-        color: root.theme.textPrimary
+        text: indicatorsRoot.temperatureLabel
+        color: indicatorsRoot.theme.textPrimary
         font.pixelSize: 11
-        font.family: root.font
+        font.family: indicatorsRoot.font
       }
     }
   }
 
   // Network
-  Rectangle {
-    height: 24
+  BarButton {
+    theme: indicatorsRoot.theme
+    font: indicatorsRoot.font
     width: netContent.width + 12
-    radius: 12
-    color: networkMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
     Accessible.role: Accessible.Button
     Accessible.name: {
       if (NetworkService.type === "ethernet") return "Network: Ethernet"
@@ -101,15 +100,7 @@ Row {
       return "Network: " + NetworkService.name
     }
     Accessible.description: "Open network settings (nmtui)"
-    Accessible.onPressAction: root.openNetworkSettings()
-
-    MouseArea {
-      id: networkMouse
-      anchors.fill: parent
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
-      onClicked: root.openNetworkSettings()
-    }
+    Accessible.onPressAction: indicatorsRoot.openNetworkSettings()
 
     Row {
       id: netContent
@@ -123,29 +114,31 @@ Row {
           if (NetworkService.type === "wifi") return "󰖩"
           return "󰖪"
         }
-        color: NetworkService.type === "disconnected" ? root.theme.textMuted : root.theme.accentGreen
+        color: NetworkService.type === "disconnected" ? indicatorsRoot.theme.textMuted : indicatorsRoot.theme.accentGreen
         font.pixelSize: 14
-        font.family: root.font
+        font.family: indicatorsRoot.font
       }
       Text {
         anchors.verticalCenter: parent.verticalCenter
         text: NetworkService.name
-        color: root.theme.textPrimary
+        color: indicatorsRoot.theme.textPrimary
         font.pixelSize: 11
-        font.family: root.font
+        font.family: indicatorsRoot.font
       }
     }
+
+    onClicked: indicatorsRoot.openNetworkSettings()
   }
 
   // Battery
-  Rectangle {
+  BarButton {
     visible: BatteryService.available
-    height: 24
+    interactive: false
+    theme: indicatorsRoot.theme
+    font: indicatorsRoot.font
     width: battContent.width + 12
-    radius: 12
-    color: root.theme.bgSurface
     Accessible.role: Accessible.StaticText
-    Accessible.name: "Battery: " + root.batteryLabel
+    Accessible.name: "Battery: " + indicatorsRoot.batteryLabel
 
     Row {
       id: battContent
@@ -154,17 +147,17 @@ Row {
 
       Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: root.batteryIcon
-        color: root.batteryColor
+        text: indicatorsRoot.batteryIcon
+        color: indicatorsRoot.batteryColor
         font.pixelSize: 14
-        font.family: root.font
+        font.family: indicatorsRoot.font
       }
       Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: root.batteryLabel
-        color: root.theme.textPrimary
+        text: indicatorsRoot.batteryLabel
+        color: indicatorsRoot.theme.textPrimary
         font.pixelSize: 11
-        font.family: root.font
+        font.family: indicatorsRoot.font
       }
     }
   }

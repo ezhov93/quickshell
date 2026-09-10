@@ -1,14 +1,9 @@
 import QtQuick
 import qs.modules.Bar.services
 
-Rectangle {
+BarButton {
   id: root
-  required property var theme
-  required property string font
-  height: 24
   width: nowPlayingContent.width + 16
-  radius: 12
-  color: root.theme.bgSurface
   visible: MediaService.available
 
   Accessible.role: Accessible.Button
@@ -40,9 +35,5 @@ Rectangle {
     }
   }
 
-  MouseArea {
-    anchors.fill: parent
-    cursorShape: Qt.PointingHandCursor
-    onClicked: MediaService.togglePlayback()
-  }
+  onClicked: MediaService.togglePlayback()
 }

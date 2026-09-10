@@ -1,16 +1,9 @@
 import QtQuick
 import qs.services
 
-Rectangle {
+BarButton {
   id: root
-  required property var theme
-  required property string font
-
-
-  height: 24
   width: volContent.width + 12
-  radius: 12
-  color: root.theme.bgSurface
 
   Accessible.role: Accessible.StaticText
   Accessible.name: {
@@ -57,15 +50,7 @@ Rectangle {
     }
   }
 
-  MouseArea {
-    anchors.fill: parent
-    cursorShape: Qt.PointingHandCursor
-    acceptedButtons: Qt.LeftButton
-    onClicked: {
-      Audio.toggleMute();
-    }
-    onWheel: (wheel) => {
-      Audio.adjust(wheel.angleDelta.y > 0);
-    }
-  }
+  onClicked: Audio.toggleMute()
+  onWheelUp: Audio.adjust(true)
+  onWheelDown: Audio.adjust(false)
 }
