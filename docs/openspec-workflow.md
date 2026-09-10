@@ -70,6 +70,8 @@ openspec validate "<имя-change>" --strict
 
 ## 4. Применение выбранного change
 
+Каждый OpenSpec change применяется в одной ветке `feature/<change-name>`, созданной от `develop`. Подветки для отдельных пунктов `tasks.md` не создаются. После завершения и проверки change feature-ветка вливается в `develop` через review/PR.
+
 После согласования назови change явно:
 
 > Примени change add-bluetooth. Выполняй его tasks.md и не выходи за scope.
