@@ -37,6 +37,16 @@ feature/refactor-project-layout
 
 Push в `develop` и `main` в обход согласованного merge запрещены политикой проекта. Разрешён только push результата проверенного squash merge; пока remote protection не настроен, это правило выполняется вручную.
 
+## Синхронизация перед push
+
+Каждый push начинается с синхронизации локальной ветки с remote:
+
+1. Получить актуальные ссылки: `git fetch origin`.
+2. Обновить текущую ветку только fast-forward-ом: `git pull --ff-only origin <branch>`.
+3. При расхождении, конфликте или ошибке remote остановить push и сначала разобраться с состоянием ветки.
+
+Для новой feature-ветки, у которой ещё нет удалённого upstream, перед первым push синхронизируется её основание (`develop`), после чего выполняется `git push -u origin feature/<change-name>`. Для уже опубликованной ветки синхронизируется сама ветка.
+
 ## Rolling-релиз
 
 Релиз выполняется без release-ветки. После release checklist и проверки `develop` переносится в `main` через squash merge, затем публикуется `main`, создаётся аннотированный тег и публикуется тег:
@@ -45,7 +55,7 @@ Push в `develop` и `main` в обход согласованного merge з�
 feature/<change> → develop → main → vMAJOR.MINOR.PATCH
 ```
 
-Локальная последовательность для релиза: `git switch main`, `git merge --squash develop`, итоговый commit, `git push origin main`, `git tag -a vMAJOR.MINOR.PATCH`, `git push origin vMAJOR.MINOR.PATCH`.
+Локальная последовательность для релиза: `git switch main`, синхронизация `main`, `git merge --squash develop`, итоговый commit, повторная синхронизация `main`, `git push origin main`, создание тега, синхронизация перед публикацией тега и `git push origin vMAJOR.MINOR.PATCH`.
 
 Перед переносом `develop` в `main` требуется release checklist, зелёные проверки и обновлённый `CHANGELOG.md`. Тег создаётся на том же commit `main` и является аннотированным.
 

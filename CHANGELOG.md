@@ -14,6 +14,7 @@
 
 - Текущая работа ведётся через `develop`, стабильные релизы — через `main`.
 - Для OpenSpec change зафиксирован порядок archive → push feature → squash merge в `develop` → push `develop` → проверка merge → удаление feature-ветки.
+- Перед каждым push требуется синхронизация с remote через `fetch` и `pull --ff-only`; при расхождении push останавливается.
 
 ### Deprecated
 

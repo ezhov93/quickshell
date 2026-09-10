@@ -31,9 +31,15 @@ hl.config({
         gaps_in         = 3,
         gaps_out        = 5,
         border_size     = 1,
-        resize_on_border = false,
+        resize_on_border = true,
         allow_tearing   = false,
         layout          = "dwindle",
+        snap = {
+            enabled       = true,
+            window_gap    = 4,
+            monitor_gap   = 5,
+            respect_gaps  = true,
+        },
     },
     decoration = {
         rounding       = 5,
@@ -123,6 +129,12 @@ hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs ipc call launcher toggle"))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("qs ipc call notifications dnd_toggle"))
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("qs ipc call monitors toggle"))
 hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("qs ipc call monitors refresh"))
+
+hl.window_rule({
+    name = "float-nmtui",
+    match = { class = "^lpde-nmtui$" },
+    float = true,
+})
 
 hl.window_rule({
     name  = "suppress-maximize-events",

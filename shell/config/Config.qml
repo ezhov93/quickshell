@@ -5,7 +5,7 @@ import Quickshell
 
 QtObject {
   readonly property string fontFamily: "Hack Nerd Font"
-  readonly property list<string> networkSettingsCommand: ["foot", "-e", "nmtui"]
+  readonly property list<string> networkSettingsCommand: ["foot", "--app-id=lpde-nmtui", "-o", "main.pad=0x0", "-e", "nmtui"]
 
   readonly property int resourceCpuInterval: 2000
   readonly property int resourceTemperatureInterval: 5000
