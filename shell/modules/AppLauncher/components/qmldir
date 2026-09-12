@@ -1,2 +1,3 @@
 module qs.modules.AppLauncher.components
+LauncherEntry 1.0 LauncherEntry.qml
 LauncherWindow 1.0 LauncherWindow.qml

@@ -1,4 +1,5 @@
 import qs.config
+import qs.components
 import qs.modules.Wallpaper.services
 import Quickshell
 import Quickshell.Wayland
@@ -225,22 +226,18 @@ PanelWindow {
         Layout.fillWidth: true
         spacing: 16
 
-        Row {
-          spacing: 4
-          Rectangle {
-            width: hintClick.width + 8; height: 18; radius: 4; color: root.theme.bgSurface
-            Text { id: hintClick; anchors.centerIn: parent; text: "click"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
-          }
-          Text { text: "apply"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+        ShortcutHint {
+          theme: root.theme
+          font: root.font
+          shortcut: "click"
+          description: "apply"
         }
 
-        Row {
-          spacing: 4
-          Rectangle {
-            width: hintRight.width + 8; height: 18; radius: 4; color: root.theme.bgSurface
-            Text { id: hintRight; anchors.centerIn: parent; text: "right-click"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
-          }
-          Text { text: "preview"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+        ShortcutHint {
+          theme: root.theme
+          font: root.font
+          shortcut: "right-click"
+          description: "preview"
         }
 
         Row {

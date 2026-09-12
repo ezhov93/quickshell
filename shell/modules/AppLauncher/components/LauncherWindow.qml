@@ -1,10 +1,11 @@
+pragma ComponentBehavior: Bound
+
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Widgets
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 
+import qs.components
 import qs.config
 import qs.modules.AppLauncher.services
 PanelWindow {
@@ -22,10 +23,7 @@ PanelWindow {
     values: {
       return SearchIndex.search(searchInput.text);
     }
-  }
-
-  function launchApp(entry) {
-    if (SearchIndex.launch(entry)) root.closeRequested();
+    onValuesChanged: root.reconcileSelection()
   }
 
   visible: true
@@ -84,7 +82,7 @@ PanelWindow {
       // Search bar
       Rectangle {
         Layout.fillWidth: true
-        height: 44
+        Layout.preferredHeight: 44
         radius: 10
         color: root.theme.bgSurface
         border.color: searchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
@@ -129,29 +127,23 @@ PanelWindow {
               verticalAlignment: Text.AlignVCenter
             }
 
-            onTextChanged: root.selectedIndex = text === "" ? -1 : 0
+            onTextChanged: root.resetSelectionForQuery()
 
             Keys.onEscapePressed: root.closeRequested()
 
             Keys.onPressed: event => {
               if (event.key === Qt.Key_Down) {
                 event.accepted = true;
-                root.selectedIndex = Math.min(root.selectedIndex + 1, resultsList.count - 1);
-                resultsList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
+                root.moveSelection(1);
               } else if (event.key === Qt.Key_Up) {
                 event.accepted = true;
-                root.selectedIndex = Math.max(root.selectedIndex - 1, 0);
-                resultsList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
+                root.moveSelection(-1);
               } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                 event.accepted = true;
-                if (root.selectedIndex >= 0) {
-                  const entry = filteredApps.values[root.selectedIndex];
-                  if (entry) root.launchApp(entry);
-                }
+                root.launchSelected();
               } else if (event.key === Qt.Key_Tab) {
                 event.accepted = true;
-                root.selectedIndex = Math.min(root.selectedIndex + 1, resultsList.count - 1);
-                resultsList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
+                root.moveSelection(1);
               }
             }
           }
@@ -195,85 +187,19 @@ PanelWindow {
           }
         }
 
-        delegate: Rectangle {
-          id: delegateRoot
+        delegate: LauncherEntry {
           required property var modelData
           required property int index
 
-          Accessible.role: Accessible.Button
-          Accessible.name: (modelData.name ?? "Application") + (modelData.genericName ? " - " + modelData.genericName : "")
-
           width: resultsList.width
-          height: 44
-          radius: 8
-          color: "transparent"
-
-          RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 12
-            anchors.rightMargin: 12
-            spacing: 12
-
-            // App icon
-            Item {
-              width: 28
-              height: 28
-              Layout.alignment: Qt.AlignVCenter
-
-              IconImage {
-                id: appIcon
-                anchors.fill: parent
-                implicitSize: 28
-                source: Quickshell.iconPath(delegateRoot.modelData.icon ?? "", true)
-                visible: (delegateRoot.modelData.icon ?? "") !== ""
-              }
-
-              // Fallback icon
-              Text {
-                anchors.centerIn: parent
-                text: "▥"
-                color: root.theme.accentPrimary
-                font.pixelSize: 20
-                font.family: root.font
-                visible: appIcon.source === "" || appIcon.status === Image.Error
-              }
-            }
-
-            // App info
-            ColumnLayout {
-              Layout.fillWidth: true
-              Layout.alignment: Qt.AlignVCenter
-              spacing: 1
-
-              Text {
-                text: delegateRoot.modelData.name ?? ""
-                color: root.selectedIndex === delegateRoot.index ? root.theme.textPrimary : root.theme.textSecondary
-                font.pixelSize: 13
-                font.family: root.font
-                font.bold: root.selectedIndex === delegateRoot.index
-                elide: Text.ElideRight
-                Layout.fillWidth: true
-              }
-
-              Text {
-                text: delegateRoot.modelData.genericName ?? delegateRoot.modelData.comment ?? ""
-                color: root.theme.textMuted
-                font.pixelSize: 11
-                font.family: root.font
-                elide: Text.ElideRight
-                Layout.fillWidth: true
-                visible: text !== ""
-              }
-            }
-          }
-
-          MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.launchApp(delegateRoot.modelData)
-            onPositionChanged: root.selectedIndex = delegateRoot.index
-          }
+          height: implicitHeight
+          entry: modelData
+          entryIndex: index
+          selected: root.selectedIndex === index
+          theme: root.theme
+          font: root.font
+          onActivated: entry => root.launchApp(entry)
+          onHovered: index => root.selectIndex(index)
         }
 
         // Empty state
@@ -292,35 +218,64 @@ PanelWindow {
         Layout.fillWidth: true
         spacing: 16
 
-        Row {
-          spacing: 4
-          Rectangle {
-            width: hintUp.width + 8; height: 18; radius: 4; color: root.theme.bgSurface
-            Text { id: hintUp; anchors.centerIn: parent; text: "↑↓"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
-          }
-          Text { text: "navigate"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+        ShortcutHint {
+          theme: root.theme
+          font: root.font
+          shortcut: "↑↓"
+          description: "navigate"
         }
 
-        Row {
-          spacing: 4
-          Rectangle {
-            width: hintEnter.width + 8; height: 18; radius: 4; color: root.theme.bgSurface
-            Text { id: hintEnter; anchors.centerIn: parent; text: "⏎"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
-          }
-          Text { text: "launch"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+        ShortcutHint {
+          theme: root.theme
+          font: root.font
+          shortcut: "⏎"
+          description: "launch"
         }
 
-        Row {
-          spacing: 4
-          Rectangle {
-            width: hintEsc.width + 8; height: 18; radius: 4; color: root.theme.bgSurface
-            Text { id: hintEsc; anchors.centerIn: parent; text: "esc"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
-          }
-          Text { text: "close"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+        ShortcutHint {
+          theme: root.theme
+          font: root.font
+          shortcut: "esc"
+          description: "close"
         }
 
         Item { Layout.fillWidth: true }
       }
     }
+  }
+
+  function selectIndex(index): void {
+    const count = filteredApps.values.length;
+    root.selectedIndex = count === 0 ? -1 : Math.max(0, Math.min(index, count - 1));
+  }
+
+  function reconcileSelection(): void {
+    if (searchInput.text === "") {
+      root.selectedIndex = -1;
+      return;
+    }
+    root.selectIndex(root.selectedIndex < 0 ? 0 : root.selectedIndex);
+  }
+
+  function resetSelectionForQuery(): void {
+    root.selectedIndex = searchInput.text === "" || filteredApps.values.length === 0 ? -1 : 0;
+  }
+
+  function moveSelection(delta): void {
+    const previousIndex = root.selectedIndex;
+    root.selectIndex(previousIndex < 0 ? 0 : previousIndex + delta);
+    if (root.selectedIndex >= 0)
+      resultsList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
+  }
+
+  function launchSelected(): void {
+    const entry = root.selectedIndex >= 0 && root.selectedIndex < filteredApps.values.length
+      ? filteredApps.values[root.selectedIndex]
+      : null;
+    if (entry) root.launchApp(entry);
+  }
+
+  function launchApp(entry): void {
+    if (SearchIndex.launch(entry)) root.closeRequested();
   }
 }

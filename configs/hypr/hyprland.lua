@@ -77,40 +77,49 @@ hl.config({
 hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 
 -- Applications.
-hl.bind(mainMod .. " + T", hl.dsp.exec_cmd(terminal))
-hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
-hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
+local function modBind(key, dispatcher, flags)
+    local binding = mainMod .. " + " .. key
+    if flags then
+        hl.bind(binding, dispatcher, flags)
+    else
+        hl.bind(binding, dispatcher)
+    end
+end
+
+modBind("T", hl.dsp.exec_cmd(terminal))
+modBind("E", hl.dsp.exec_cmd(fileManager))
+modBind("B", hl.dsp.exec_cmd(browser))
 
 -- Session and windows.
-hl.bind(mainMod .. " + Q", hl.dsp.window.close())
-hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("uwsm stop"))
-hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ action = "toggle" }))
-hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
+modBind("Q", hl.dsp.window.close())
+modBind("SHIFT + M", hl.dsp.exec_cmd("uwsm stop"))
+modBind("F", hl.dsp.window.fullscreen({ action = "toggle" }))
+modBind("V", hl.dsp.window.float({ action = "toggle" }))
+modBind("L", hl.dsp.exec_cmd("hyprlock"))
 
 -- Focus and move windows.
 for _, direction in ipairs({ "left", "right", "up", "down" }) do
-    hl.bind(mainMod .. " + " .. direction, hl.dsp.focus({ direction = direction }))
-    hl.bind(mainMod .. " + SHIFT + " .. direction, hl.dsp.window.move({ direction = direction }))
+    modBind(direction, hl.dsp.focus({ direction = direction }))
+    modBind("SHIFT + " .. direction, hl.dsp.window.move({ direction = direction }))
 end
 
 -- Workspaces 1-10; workspace 10 is bound to 0.
 for i = 1, 10 do
     local key = i % 10
-    hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ workspace = i }))
-    hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
+    modBind(key, hl.dsp.focus({ workspace = i }))
+    modBind("SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
 end
 
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
-hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
-hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+modBind("mouse_down", hl.dsp.focus({ workspace = "e+1" }))
+modBind("mouse_up", hl.dsp.focus({ workspace = "e-1" }))
+modBind("mouse:272", hl.dsp.window.drag(),   { mouse = true })
+modBind("mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 hl.bind(
     "PRINT",
     hl.dsp.exec_cmd([[sh -c 'mkdir -p "$HOME/Pictures/Screenshots"; grim -g "$(slurp)" "$HOME/Pictures/Screenshots/screenshot-$(date +%Y-%m-%d_%H-%M-%S).png"']])
 )
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd([[grim -g "$(slurp)" - | wl-copy]]))
+modBind("SHIFT + S", hl.dsp.exec_cmd([[grim -g "$(slurp)" - | wl-copy]]))
 
 -- Multimedia and brightness keys work while the screen is locked.
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
@@ -125,10 +134,10 @@ hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true })
 
 -- Quickshell IPC.
-hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs ipc call launcher toggle"))
-hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("qs ipc call notifications dnd_toggle"))
-hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("qs ipc call monitors toggle"))
-hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("qs ipc call monitors refresh"))
+modBind("D", hl.dsp.exec_cmd("qs ipc call launcher toggle"))
+modBind("SHIFT + N", hl.dsp.exec_cmd("qs ipc call notifications dnd_toggle"))
+modBind("O", hl.dsp.exec_cmd("qs ipc call monitors toggle"))
+modBind("SHIFT + O", hl.dsp.exec_cmd("qs ipc call monitors refresh"))
 
 hl.window_rule({
     name = "float-nmtui",

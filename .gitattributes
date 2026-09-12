@@ -1,0 +1,3 @@
+.agents/skills/hyprland/.gitignore whitespace=-blank-at-eof
+.agents/skills/hyprland/references/** whitespace=-trailing-space,-blank-at-eof
+.agents/skills/qt-qml-review/references/qt-qml-review-checklist.md whitespace=-trailing-space

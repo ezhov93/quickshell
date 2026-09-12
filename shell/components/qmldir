@@ -1,2 +1,3 @@
 module qs.components
 IconButton 1.0 IconButton.qml
+ShortcutHint 1.0 ShortcutHint.qml

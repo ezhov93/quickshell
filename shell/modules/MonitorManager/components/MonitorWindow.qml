@@ -275,31 +275,25 @@ PanelWindow {
         Layout.fillWidth: true
         spacing: 16
 
-        Row {
-          spacing: 4
-          Rectangle {
-            width: hintDrag.width + 8; height: 18; radius: 4; color: root.theme.bgSurface
-            Text { id: hintDrag; anchors.centerIn: parent; text: "drag"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
-          }
-          Text { text: "arrange"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+        ShortcutHint {
+          theme: root.theme
+          font: root.font
+          shortcut: "drag"
+          description: "arrange"
         }
 
-        Row {
-          spacing: 4
-          Rectangle {
-            width: hintClick.width + 8; height: 18; radius: 4; color: root.theme.bgSurface
-            Text { id: hintClick; anchors.centerIn: parent; text: "click"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
-          }
-          Text { text: "select"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+        ShortcutHint {
+          theme: root.theme
+          font: root.font
+          shortcut: "click"
+          description: "select"
         }
 
-        Row {
-          spacing: 4
-          Rectangle {
-            width: hintEsc.width + 8; height: 18; radius: 4; color: root.theme.bgSurface
-            Text { id: hintEsc; anchors.centerIn: parent; text: "esc"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
-          }
-          Text { text: "close"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+        ShortcutHint {
+          theme: root.theme
+          font: root.font
+          shortcut: "esc"
+          description: "close"
         }
 
         Item { Layout.fillWidth: true }
