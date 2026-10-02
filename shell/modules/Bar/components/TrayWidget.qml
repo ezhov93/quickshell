@@ -4,11 +4,10 @@ import Quickshell
 import Quickshell.Widgets
 import qs.modules.Bar.services
 
-BarButton {
+BarPill {
   id: root
   implicitHeight: 24
   implicitWidth: trayIcons.implicitWidth + 4
-  interactive: false
 
   RowLayout {
     id: trayIcons

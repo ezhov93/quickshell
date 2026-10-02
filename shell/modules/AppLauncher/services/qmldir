@@ -1,2 +1,2 @@
 module qs.modules.AppLauncher.services
-singleton SearchIndex 1.0 SearchIndex.qml
+singleton LauncherService 1.0 LauncherService.qml

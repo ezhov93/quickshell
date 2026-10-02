@@ -1,8 +1,19 @@
 module qs.modules.Bar.components
+ActiveWindowWidget 1.0 ActiveWindowWidget.qml
+BatteryWidget 1.0 BatteryWidget.qml
 BarButton 1.0 BarButton.qml
+BarPill 1.0 BarPill.qml
+BarWindow 1.0 BarWindow.qml
 BrightnessWidget 1.0 BrightnessWidget.qml
+CalendarHeaderButton 1.0 CalendarHeaderButton.qml
+CalendarPopover 1.0 CalendarPopover.qml
+ClockWidget 1.0 ClockWidget.qml
+CpuWidget 1.0 CpuWidget.qml
+KeyboardLayoutWidget 1.0 KeyboardLayoutWidget.qml
 MediaWidget 1.0 MediaWidget.qml
-SystemIndicators 1.0 SystemIndicators.qml
+MemoryWidget 1.0 MemoryWidget.qml
+NetworkWidget 1.0 NetworkWidget.qml
+TemperatureWidget 1.0 TemperatureWidget.qml
 TrayWidget 1.0 TrayWidget.qml
 VolumeWidget 1.0 VolumeWidget.qml
-WorkspaceList 1.0 WorkspaceList.qml
+WorkspaceSwitcher 1.0 WorkspaceSwitcher.qml

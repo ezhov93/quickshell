@@ -59,10 +59,12 @@ Item {
     }
 
     Text {
-      anchors.horizontalCenter: parent.horizontalCenter
-      anchors.verticalCenter:   root._inStrip ? undefined    : parent.verticalCenter
-      anchors.bottom:           root._inStrip ? parent.bottom : undefined
-      anchors.bottomMargin:     root._inStrip ? 6            : 0
+      anchors {
+        horizontalCenter: parent.horizontalCenter
+        verticalCenter: root._inStrip ? undefined : parent.verticalCenter
+        bottom: root._inStrip ? parent.bottom : undefined
+        bottomMargin: root._inStrip ? 6 : 0
+      }
       text: root.monitor.disabled
             ? "disabled"
             : (root._isMirror
@@ -114,12 +116,14 @@ Item {
   MouseArea {
     id: dragArea
     anchors.fill: parent
-    drag.target: root._inStrip ? null : root
-    drag.axis: Drag.XAndYAxis
-    drag.minimumX: root.dragMinX
-    drag.minimumY: root.dragMinY
-    drag.maximumX: root.dragMaxX
-    drag.maximumY: root.dragMaxY
+    drag {
+      target: root._inStrip ? null : root
+      axis: Drag.XAndYAxis
+      minimumX: root.dragMinX
+      minimumY: root.dragMinY
+      maximumX: root.dragMaxX
+      maximumY: root.dragMaxY
+    }
     cursorShape: root._inStrip ? Qt.PointingHandCursor : Qt.SizeAllCursor
 
     onClicked: root.clicked(root.index)

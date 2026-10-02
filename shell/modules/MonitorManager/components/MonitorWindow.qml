@@ -89,7 +89,8 @@ PanelWindow {
 
         // Refresh button
         IconButton {
-          width: 28; height: 28
+          Layout.preferredWidth: 28
+          Layout.preferredHeight: 28
           circular:  true
           theme:     root.theme
           font:      root.font
@@ -125,7 +126,7 @@ PanelWindow {
         MonitorPanel {
           id: panel
         enabled: !editor.isApplying
-          width: 260
+          Layout.preferredWidth: 260
           Layout.fillHeight: true
           visible: editor.selectedIndex >= 0 && editor.editState.length > 0
 
@@ -146,7 +147,7 @@ PanelWindow {
       Rectangle {
         Layout.fillWidth: true
         visible: editor.persistWarning
-        height: 40
+        Layout.preferredHeight: 40
         radius: 8
         color: Qt.rgba(root.theme.accentOrange.r, root.theme.accentOrange.g, root.theme.accentOrange.b, 0.12)
         border.color: root.theme.accentOrange
@@ -181,7 +182,7 @@ PanelWindow {
       Rectangle {
         Layout.fillWidth: true
         visible: editor.hotplugDetected
-        height: 40
+        Layout.preferredHeight: 40
         radius: 8
         color: Qt.rgba(root.theme.accentCyan.r, root.theme.accentCyan.g, root.theme.accentCyan.b, 0.12)
         border.color: root.theme.accentCyan
@@ -199,7 +200,8 @@ PanelWindow {
           }
 
           IconButton {
-            height: 24; radius: 6
+            Layout.preferredHeight: 24
+            radius: 6
             theme:     root.theme
             font:      root.font
             label:     "Ignore"
@@ -210,7 +212,8 @@ PanelWindow {
           }
 
           IconButton {
-            height: 24; radius: 6
+            Layout.preferredHeight: 24
+            radius: 6
             theme:      root.theme
             font:       root.font
             label:      "Reload layout"
@@ -231,7 +234,7 @@ PanelWindow {
         id: errorBanner
         Layout.fillWidth: true
         visible: editor.applyError !== ""
-        height: 40
+        Layout.preferredHeight: 40
         radius: 8
         color: Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.15)
         border.color: root.theme.accentRed
@@ -306,7 +309,9 @@ PanelWindow {
         }
 
         Rectangle {
-          width: applyText.width + 24; height: 32; radius: 8
+          Layout.preferredWidth: applyText.width + 24
+          Layout.preferredHeight: 32
+          radius: 8
           color: (editor.isApplying || MonitorService.loading || editor.hasOverlap)
                  ? root.theme.bgSurface : root.theme.accentPrimary
           border.color: root.theme.bgBorder

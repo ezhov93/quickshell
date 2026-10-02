@@ -1,5 +1,6 @@
 import qs.config
 import qs.modules.AppLauncher.components
+import qs.modules.AppLauncher.services
 import Quickshell
 import Quickshell.Io
 
@@ -18,6 +19,9 @@ Scope {
       theme: root.theme
       font: root.font
       onCloseRequested: root.isOpen = false
+      onLaunchRequested: entry => {
+        if (LauncherService.launch(entry)) root.isOpen = false;
+      }
     }
   }
 }

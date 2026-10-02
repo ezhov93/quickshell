@@ -198,7 +198,7 @@ Item {
       Rectangle {
         id: modePill
         Layout.fillWidth: true
-        height: 32
+        Layout.preferredHeight: 32
         radius: 8
         color: panel.theme.bgSurface
         border.color: panel.modePickerOpen ? panel.theme.accentPrimary : panel.theme.bgBorder
@@ -345,7 +345,7 @@ Item {
       Rectangle {
         id: mirrorPill
         Layout.fillWidth: true
-        height: 32
+        Layout.preferredHeight: 32
         radius: 8
         color: panel.theme.bgSurface
         border.color: panel.mirrorPickerOpen ? panel.theme.accentPrimary : panel.theme.bgBorder
@@ -391,7 +391,7 @@ Item {
       // Enable / Disable toggle
       Rectangle {
         Layout.fillWidth: true
-        height: 32
+        Layout.preferredHeight: 32
         radius: 8
         color: (panel.monitor?.disabled ?? true) ? panel.theme.bgSurface : panel.theme.accentGreen
         border.color: panel.theme.bgBorder
@@ -424,7 +424,7 @@ Item {
       }
 
       // Bottom spacer
-      Item { height: 8 }
+      Item { Layout.preferredHeight: 8 }
     }
   }
 }

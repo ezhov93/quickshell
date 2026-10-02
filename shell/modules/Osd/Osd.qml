@@ -54,33 +54,38 @@ Scope {
   Variants {
     model: Quickshell.screens
 
-    PanelWindow {
+    LazyLoader {
+      id: osdLoader
       required property var modelData
-      screen: modelData
+      active: root.showVolume || root.showBrightness
 
-      visible: root.showVolume || root.showBrightness
-      focusable: false
-      color: "transparent"
+      PanelWindow {
+        screen: osdLoader.modelData
 
-      WlrLayershell.layer: WlrLayer.Overlay
-      WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-      WlrLayershell.namespace: "quickshell-osd"
+        focusable: false
+        color: "transparent"
 
-      exclusionMode: ExclusionMode.Ignore
-      mask: Region {}
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "quickshell-osd"
 
-      anchors {
-        right: true
-        top: true
-        bottom: true
-      }
+        exclusionMode: ExclusionMode.Ignore
+        mask: Region {}
 
-      implicitWidth: 70
+        anchors {
+          right: true
+          top: true
+          bottom: true
+        }
 
-      Column {
-        anchors.right: parent.right
-        anchors.rightMargin: 10
-        anchors.verticalCenter: parent.verticalCenter
+        implicitWidth: 70
+
+        Column {
+        anchors {
+          right: parent.right
+          rightMargin: 10
+          verticalCenter: parent.verticalCenter
+        }
         spacing: 12
 
         // Volume pill — vertical
@@ -100,11 +105,13 @@ Scope {
           Accessible.name: root.volumeMuted ? "Volume: muted" : "Volume: " + Math.round(root.volumeValue * 100) + "%"
 
           ColumnLayout {
-            anchors.fill: parent
-            anchors.topMargin: 12
-            anchors.bottomMargin: 12
-            anchors.leftMargin: 0
-            anchors.rightMargin: 0
+            anchors {
+              fill: parent
+              topMargin: 12
+              bottomMargin: 12
+              leftMargin: 0
+              rightMargin: 0
+            }
             spacing: 8
 
             Text {
@@ -118,7 +125,7 @@ Scope {
             Rectangle {
               Layout.fillHeight: true
               Layout.alignment: Qt.AlignHCenter
-              width: 8
+              Layout.preferredWidth: 8
               radius: 4
               color: root.theme.bgSurface
               border.color: root.theme.bgBorder
@@ -126,10 +133,12 @@ Scope {
               clip: true
 
               Rectangle {
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.margins: 2
+                anchors {
+                  bottom: parent.bottom
+                  left: parent.left
+                  right: parent.right
+                  margins: 2
+                }
                 height: Math.max(0, (parent.height - 4) * Math.max(0, Math.min(1, root.volumeMuted ? 0 : root.volumeValue)))
                 radius: 3
                 color: root.volumeMuted ? root.theme.textMuted : root.theme.accentPrimary
@@ -170,11 +179,13 @@ Scope {
           Accessible.name: "Brightness: " + Math.round(root.brightnessValue * 100) + "%"
 
           ColumnLayout {
-            anchors.fill: parent
-            anchors.topMargin: 12
-            anchors.bottomMargin: 12
-            anchors.leftMargin: 0
-            anchors.rightMargin: 0
+            anchors {
+              fill: parent
+              topMargin: 12
+              bottomMargin: 12
+              leftMargin: 0
+              rightMargin: 0
+            }
             spacing: 8
 
             Text {
@@ -188,7 +199,7 @@ Scope {
             Rectangle {
               Layout.fillHeight: true
               Layout.alignment: Qt.AlignHCenter
-              width: 8
+              Layout.preferredWidth: 8
               radius: 4
               color: root.theme.bgSurface
               border.color: root.theme.bgBorder
@@ -196,10 +207,12 @@ Scope {
               clip: true
 
               Rectangle {
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.margins: 2
+                anchors {
+                  bottom: parent.bottom
+                  left: parent.left
+                  right: parent.right
+                  margins: 2
+                }
                 height: Math.max(0, (parent.height - 4) * Math.max(0, Math.min(1, root.brightnessValue)))
                 radius: 3
                 color: root.theme.accentOrange
@@ -216,6 +229,7 @@ Scope {
               Layout.alignment: Qt.AlignHCenter
             }
           }
+        }
         }
       }
     }

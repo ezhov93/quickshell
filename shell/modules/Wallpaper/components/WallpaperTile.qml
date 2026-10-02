@@ -50,9 +50,11 @@ Item {
 
     // Filename label
     Rectangle {
-      anchors.bottom: parent.bottom
-      anchors.left: parent.left
-      anchors.right: parent.right
+      anchors {
+        bottom: parent.bottom
+        left: parent.left
+        right: parent.right
+      }
       height: 22
       color: Qt.rgba(0, 0, 0, 0.6)
 
@@ -70,9 +72,11 @@ Item {
 
     // Active indicator
     Rectangle {
-      anchors.top: parent.top
-      anchors.right: parent.right
-      anchors.margins: 6
+      anchors {
+        top: parent.top
+        right: parent.right
+        margins: 6
+      }
       width: 20
       height: 20
       radius: 10

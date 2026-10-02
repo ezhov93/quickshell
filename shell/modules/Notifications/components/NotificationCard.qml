@@ -43,20 +43,24 @@ Rectangle {
         width: 3
         height: parent.height - 16
         radius: 2
-        anchors.left: parent.left
-        anchors.leftMargin: 6
-        anchors.verticalCenter: parent.verticalCenter
+        anchors {
+            left: parent.left
+            leftMargin: 6
+            verticalCenter: parent.verticalCenter
+        }
         color: notifCard.modelData.isCritical ? notifCard.theme.urgencyCritical :
                notifCard.modelData.isLow      ? notifCard.theme.urgencyLow      : notifCard.theme.urgencyNormal
     }
 
     ColumnLayout {
         id: cardContent
-        anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 12
-        anchors.topMargin: 12
-        anchors.bottomMargin: 12
+        anchors {
+            fill: parent
+            leftMargin: 16
+            rightMargin: 12
+            topMargin: 12
+            bottomMargin: 12
+        }
         spacing: 6
 
         RowLayout {
@@ -107,8 +111,8 @@ Rectangle {
             Item { Layout.fillWidth: true }
 
             Rectangle {
-                width: 20
-                height: 20
+                Layout.preferredWidth: 20
+                Layout.preferredHeight: 20
                 radius: 10
                 color: closeHover.containsMouse ? notifCard.theme.bgBorder : "transparent"
                 Layout.alignment: Qt.AlignVCenter
@@ -136,9 +140,11 @@ Rectangle {
         Text {
             text: notifCard.modelData.summary
             color: notifCard.theme.textPrimary
-            font.pixelSize: 13
-            font.family: notifCard.font
-            font.bold: true
+            font {
+                pixelSize: 13
+                family: notifCard.font
+                bold: true
+            }
             elide: Text.ElideRight
             Layout.fillWidth: true
             visible: text !== ""
@@ -224,9 +230,9 @@ Rectangle {
             }
         }
 
-        Rectangle {
-            Layout.fillWidth: true
-            height: 2
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 2
             radius: 1
             color: notifCard.theme.bgSurface
             Layout.topMargin: 2

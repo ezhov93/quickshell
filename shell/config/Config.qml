@@ -16,7 +16,9 @@ QtObject {
     Quickshell.env("HOME") + "/Pictures/Wallpapers",
     Quickshell.env("HOME") + "/Pictures"
   ]
-  readonly property string wallpaperConfigPath: Quickshell.env("HOME") + "/.config/quickshell/wallpaper.conf"
+  readonly property string wallpaperConfigPath: Quickshell.env("HOME") + "/.config/hypr/hyprpaper.conf"
+  readonly property string wallpaperMonitor: ""
+  readonly property string wallpaperFitMode: "cover"
   readonly property int wallpaperMaxCount: 200
 
   readonly property int notificationMaxCount: 5

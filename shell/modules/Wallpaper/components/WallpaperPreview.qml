@@ -31,9 +31,11 @@ Rectangle {
 
   // Apply button
   Rectangle {
-    anchors.bottom: parent.bottom
-    anchors.horizontalCenter: parent.horizontalCenter
-    anchors.bottomMargin: 40
+    anchors {
+      bottom: parent.bottom
+      horizontalCenter: parent.horizontalCenter
+      bottomMargin: 40
+    }
     width: applyRow.width + 32
     height: 40
     radius: 20
@@ -56,9 +58,11 @@ Rectangle {
       Text {
         text: "Apply Wallpaper"
         color: root.theme.bgBase
-        font.pixelSize: 13
-        font.family: root.font
-        font.bold: true
+        font {
+          pixelSize: 13
+          family: root.font
+          bold: true
+        }
         anchors.verticalCenter: parent.verticalCenter
       }
     }

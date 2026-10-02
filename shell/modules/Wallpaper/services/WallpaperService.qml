@@ -13,7 +13,6 @@ Singleton {
   property string currentWallpaper: ""
   readonly property string backend: "hyprpaper"
   property string pendingWallpaper: ""
-  property int restoreAttempts: 0
   property string applyError: ""
 
   property bool scanned: false
@@ -27,7 +26,42 @@ Singleton {
     }
   }
 
-  // Load saved wallpaper path
+  function wallpaperBlock(path) {
+    return "wallpaper {\n" +
+      "    monitor = " + Config.wallpaperMonitor + "\n" +
+      "    path = " + path + "\n" +
+      "    fit_mode = " + Config.wallpaperFitMode + "\n" +
+      "}\n";
+  }
+
+  function firstWallpaperBlock(content) {
+    const match = /wallpaper\s*\{[\s\S]*?\}/i.exec(content);
+    if (!match) return null;
+    const pathMatch = /(?:^|\n)\s*path\s*=\s*(.+?)\s*(?:\n|$)/i.exec(match[0]);
+    return {
+      start: match.index,
+      end: match.index + match[0].length,
+      path: pathMatch ? pathMatch[1].trim() : ""
+    };
+  }
+
+  function configWithWallpaper(content, path) {
+    const block = firstWallpaperBlock(content);
+    const replacement = wallpaperBlock(path);
+    if (!block) return content.trim() === "" ? replacement : content.trimEnd() + "\n\n" + replacement;
+    return content.slice(0, block.start) + replacement + content.slice(block.end).replace(/^\n*/, "\n");
+  }
+
+  function setCurrentWallpaperFromConfig(path) {
+    if (!path) return;
+    root.currentWallpaper = path;
+  }
+
+  function loadSavedWallpaper() {
+    setCurrentWallpaperFromConfig(firstWallpaperBlock(configFile.text())?.path || "");
+  }
+
+  // Load the saved wallpaper path from hyprpaper.conf.
   FileView {
     id: configFile
     path: Config.wallpaperConfigPath
@@ -37,13 +71,10 @@ Singleton {
     onLoadFailed: error => {
       if (error !== FileViewError.FileNotFound)
         console.warn("Cannot read wallpaper configuration:", FileViewError.toString(error));
+      root.loadSavedWallpaper();
     }
     onLoaded: {
-      const saved = configFile.text().trim();
-      if (saved !== "") {
-        root.pendingWallpaper = saved;
-        restoreTimer.start();
-      }
+      root.loadSavedWallpaper();
     }
   }
 
@@ -62,24 +93,12 @@ Singleton {
     scanner.scan(Config.wallpaperDirectories, 2);
   }
 
-  function setWallpaper(path, restoring = false) {
+  function setWallpaper(path) {
     if (setProcess.running || root.saving || path === "") return;
-    restoreTimer.stop();
-    if (!restoring) restoreAttempts = 0;
     pendingWallpaper = path;
     applyError = "";
     setProcess.command = ["hyprctl", "hyprpaper", "wallpaper", "," + path];
     setProcess.running = true;
-  }
-
-  // Hyprpaper may start after Quickshell during session startup.
-  Timer {
-    id: restoreTimer
-    interval: 1000
-    onTriggered: {
-      root.restoreAttempts++;
-      root.setWallpaper(root.pendingWallpaper, true);
-    }
   }
 
   Process {
@@ -95,19 +114,14 @@ Singleton {
     onExited: (exitCode, exitStatus) => {
       if (exitCode !== 0 || exitStatus !== 0) {
         if (!root.applyError.trim()) root.applyError = "Hyprpaper failed (exit " + exitCode + ")";
-        if (root.restoreAttempts > 0 && root.restoreAttempts < 10) {
-          restoreTimer.start();
-        } else {
-          console.warn("Hyprpaper could not apply wallpaper:", root.pendingWallpaper,
-            "exit code:", exitCode, root.applyError.trim());
-        }
+        console.warn("Hyprpaper could not apply wallpaper:", root.pendingWallpaper,
+          "exit code:", exitCode, root.applyError.trim());
         return;
       }
-      root.restoreAttempts = 0;
       root.applyError = "";
       root.currentWallpaper = root.pendingWallpaper;
       root.saving = true;
-      configWriter.write(configFile.path, root.currentWallpaper);
+      configWriter.write(configFile.path, root.configWithWallpaper(configFile.text(), root.currentWallpaper));
     }
   }
 

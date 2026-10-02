@@ -204,6 +204,11 @@ for entry in "${config_entries[@]}"; do
   fi
 done
 
+# Preserve the user's wallpaper state and hyprpaper settings across updates.
+if [[ -n "$backup" && -f "$backup/configs/hypr/hyprpaper.conf" ]]; then
+  cp -- "$backup/configs/hypr/hyprpaper.conf" "$stage/configs/hypr/hyprpaper.conf"
+fi
+
 # Устанавливаем staged runtime и configs.
 mv -- "$stage/quickshell" "$target"
 installed_targets+=("$target")

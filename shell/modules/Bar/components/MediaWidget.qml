@@ -11,9 +11,11 @@ BarButton {
 
   Row {
     id: nowPlayingContent
-    anchors.verticalCenter: parent.verticalCenter
-    anchors.left: parent.left
-    anchors.leftMargin: 8
+    anchors {
+      verticalCenter: parent.verticalCenter
+      left: parent.left
+      leftMargin: 8
+    }
     spacing: 6
 
     Text {

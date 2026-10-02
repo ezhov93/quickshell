@@ -36,7 +36,7 @@ Item {
 
       IconImage {
         id: appIcon
-        anchors.fill: parent
+        anchors.centerIn: parent
         implicitSize: 28
         source: Quickshell.iconPath(root.entry.icon ?? "", true)
         visible: (root.entry.icon ?? "") !== ""
@@ -63,9 +63,11 @@ Item {
         text: root.entry.name ?? ""
         textFormat: Text.PlainText
         color: root.selected ? root.theme.textPrimary : root.theme.textSecondary
-        font.pixelSize: 13
-        font.family: root.font
-        font.bold: root.selected
+        font {
+          pixelSize: 13
+          family: root.font
+          bold: root.selected
+        }
         elide: Text.ElideRight
       }
 

@@ -27,47 +27,52 @@ Scope {
     Variants {
         model: Quickshell.screens
 
-        PanelWindow {
-            id: notifWindow
+        LazyLoader {
+            id: notificationLoader
             required property var modelData
-            screen: modelData
+            active: NotificationService.notifications.length > 0
 
-            visible: NotificationService.notifications.length > 0
-            focusable: false
-            color: "transparent"
+            PanelWindow {
+                id: notifWindow
+                screen: notificationLoader.modelData
 
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-            WlrLayershell.namespace: "quickshell-notifications"
+                focusable: false
+                color: "transparent"
 
-            exclusionMode: ExclusionMode.Ignore
+                WlrLayershell.layer: WlrLayer.Overlay
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                WlrLayershell.namespace: "quickshell-notifications"
 
-            anchors {
-                top: true
-                right: true
-            }
+                exclusionMode: ExclusionMode.Ignore
+                anchors {
+                    top: true
+                    right: true
+                }
 
-            implicitWidth: 380
-            implicitHeight: notifColumn.implicitHeight + 20
+                implicitWidth: 380
+                implicitHeight: Math.max(1, notifColumn.implicitHeight + 20)
 
-            ColumnLayout {
-                id: notifColumn
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.topMargin: 10
-                anchors.rightMargin: 10
-                width: 360
-                spacing: 8
-
-                Repeater {
-                    model: ScriptModel {
-                        values: NotificationService.notifications
-                        objectProp: "seqId"
+                ColumnLayout {
+                    id: notifColumn
+                    anchors {
+                        top: parent.top
+                        right: parent.right
+                        topMargin: 10
+                        rightMargin: 10
                     }
+                    width: 360
+                    spacing: 8
 
-                    NotificationCard {
-                        theme: root.theme
-                        font: root.font
+                    Repeater {
+                        model: ScriptModel {
+                            values: NotificationService.notifications
+                            objectProp: "seqId"
+                        }
+
+                        NotificationCard {
+                            theme: root.theme
+                            font: root.font
+                        }
                     }
                 }
             }

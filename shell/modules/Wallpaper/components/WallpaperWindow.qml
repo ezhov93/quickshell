@@ -82,9 +82,11 @@ PanelWindow {
         Text {
           text: "󰸉  Wallpaper"
           color: root.theme.accentPrimary
-          font.pixelSize: 14
-          font.family: root.font
-          font.bold: true
+          font {
+            pixelSize: 14
+            family: root.font
+            bold: true
+          }
         }
 
         Item { Layout.fillWidth: true }
@@ -98,8 +100,8 @@ PanelWindow {
 
         // Refresh button
         Rectangle {
-          width: 28
-          height: 28
+          Layout.preferredWidth: 28
+          Layout.preferredHeight: 28
           radius: 14
           color: refreshHover.containsMouse ? root.theme.bgHover : "transparent"
           Accessible.role: Accessible.Button
@@ -136,23 +138,27 @@ PanelWindow {
       // Search
       Rectangle {
         Layout.fillWidth: true
-        height: 36
+        Layout.preferredHeight: 36
         radius: 8
         color: root.theme.bgSurface
         border.color: searchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
         border.width: 1
 
         RowLayout {
-          anchors.fill: parent
-          anchors.leftMargin: 10
-          anchors.rightMargin: 10
+          anchors {
+            fill: parent
+            leftMargin: 10
+            rightMargin: 10
+          }
           spacing: 8
 
           Text {
             text: ""
             color: root.theme.textMuted
-            font.pixelSize: 13
-            font.family: root.font
+            font {
+              pixelSize: 13
+              family: root.font
+            }
             Layout.alignment: Qt.AlignVCenter
           }
 

@@ -1,42 +1,29 @@
 import QtQuick
 
-Rectangle {
+BarPill {
   id: root
-
-  property var theme
-  property string font: ""
-
-  property bool interactive: true
-  property color baseColor: root.theme ? root.theme.bgSurface : "transparent"
-  property color hoverColor: root.theme ? root.theme.bgHover : "transparent"
-  property int horizontalPadding: 6
-  property int verticalPadding: 0
-
-  default property alias contentData: content.data
 
   signal clicked()
   signal wheelUp()
   signal wheelDown()
 
-  implicitWidth: content.childrenRect.width + horizontalPadding * 2
-  implicitHeight: 24
-  radius: height / 2
-  color: mouseArea.containsMouse && root.interactive ? root.hoverColor : root.baseColor
+  hovered: inputArea.containsMouse
+  activeFocusOnTab: true
+  Accessible.role: Accessible.Button
+  Accessible.onPressAction: root.clicked()
 
-  Item {
-    id: content
-    anchors.fill: parent
-    anchors.leftMargin: root.horizontalPadding
-    anchors.rightMargin: root.horizontalPadding
-    anchors.topMargin: root.verticalPadding
-    anchors.bottomMargin: root.verticalPadding
+  Keys.onPressed: event => {
+    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+      root.clicked();
+      event.accepted = true;
+    }
   }
 
-  MouseArea {
-    id: mouseArea
+  readonly property MouseArea inputArea: MouseArea {
+    parent: root
     anchors.fill: parent
-    enabled: root.interactive
-    hoverEnabled: root.interactive
+    z: 1
+    hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
     acceptedButtons: Qt.LeftButton
     onClicked: root.clicked()

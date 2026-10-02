@@ -51,16 +51,14 @@ Scope {
     WlrLayershell.namespace: "quickshell-idle-inhibitor"
 
     exclusionMode: ExclusionMode.Ignore
-    mask: Region { item: badge }
+    mask: Region { item: root.showBadge ? badge : null }
 
     anchors {
       bottom: true
       right: true
     }
-    margins {
-      bottom: 8
-      right: 8
-    }
+    margins.bottom: 8
+    margins.right: 8
     implicitWidth: 40
     implicitHeight: 40
 

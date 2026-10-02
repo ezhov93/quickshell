@@ -109,12 +109,16 @@ Item {
   }
 
   Image {
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.top: parent.top
-    anchors.bottom: parent.bottom
-    anchors.bottomMargin: canvas._stripH
+    anchors {
+      left: parent.left
+      right: parent.right
+      top: parent.top
+      bottom: parent.bottom
+      bottomMargin: canvas._stripH
+    }
     source: dotTile.dataUrl
+    sourceSize.width: 24
+    sourceSize.height: 24
     fillMode: Image.Tile
     horizontalAlignment: Image.AlignHCenter
     verticalAlignment: Image.AlignVCenter
@@ -123,9 +127,8 @@ Item {
   }
 
   // Center crosshair
-  Rectangle {
+  Item {
     anchors.fill: parent
-    color: "transparent"
     Rectangle {
       anchors.centerIn: parent
       width: parent.width; height: 1
@@ -142,9 +145,11 @@ Item {
 
   Rectangle {
     visible: canvas._stripH > 0
-    anchors.bottom: parent.bottom
-    anchors.left: parent.left
-    anchors.right: parent.right
+    anchors {
+      bottom: parent.bottom
+      left: parent.left
+      right: parent.right
+    }
     height: canvas._stripH
     radius: 8
     color: Qt.rgba(0, 0, 0, 0.15)
