@@ -11,9 +11,9 @@ BarPill {
 
   Text {
     id: label
-    anchors.centerIn: parent
     text: KeyboardLayoutService.label
     color: root.theme.accentPrimary
+    anchors.centerIn: parent
     font {
       pixelSize: 11
       family: root.font

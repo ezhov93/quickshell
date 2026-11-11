@@ -2,6 +2,8 @@ pragma Singleton
 import Quickshell
 
 Singleton {
+    id: root
+
     // Logical (un-scaled, rotation-aware) width of a monitor
     function logicalW(m) {
         return (m.transform % 2 === 0) ? m.width / m.scale : m.height / m.scale;

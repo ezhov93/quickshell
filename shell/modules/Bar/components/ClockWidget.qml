@@ -9,38 +9,37 @@ BarButton {
   width: content.width + 16
   Accessible.name: qsTr("Date: %1, time: %2").arg(ClockService.dateString).arg(ClockService.timeString)
   Accessible.description: root.calendarOpen ? qsTr("Close calendar") : qsTr("Open calendar")
+  onClicked: root.calendarOpen = !root.calendarOpen
 
   Row {
     id: content
-    anchors.centerIn: parent
     spacing: 8
 
+    anchors.centerIn: parent
     Text {
-      anchors.verticalCenter: parent.verticalCenter
       text: ""
       color: root.theme.accentPrimary
+      anchors.verticalCenter: parent.verticalCenter
       font.pixelSize: 14
       font.family: root.font
     }
 
     Text {
-      anchors.verticalCenter: parent.verticalCenter
       text: ClockService.dateString
       color: root.theme.textPrimary
+      anchors.verticalCenter: parent.verticalCenter
       font.pixelSize: 12
       font.family: root.font
     }
 
     Text {
-      anchors.verticalCenter: parent.verticalCenter
       text: ClockService.timeString
       color: root.theme.textSecondary
+      anchors.verticalCenter: parent.verticalCenter
       font.pixelSize: 12
       font.family: root.font
     }
   }
-
-  onClicked: root.calendarOpen = !root.calendarOpen
 
   LazyLoader {
     active: root.calendarOpen

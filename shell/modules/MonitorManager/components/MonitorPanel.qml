@@ -1,15 +1,18 @@
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Controls.Basic
 import QtQuick.Layouts
+import qs.config
 
 Item {
-  id: panel
+  id: root
 
-  // Not required — intentionally null when no monitor is selected
   property var monitor:     null
-  property var allMonitors: []
-  required property var theme
+  property list<var> allMonitors: []
+  required property Theme theme
   required property string font
+
+  property bool modePickerOpen:   false
+  property bool mirrorPickerOpen: false
 
   signal modeSelected(string mode)
   signal scaleSelected(real scale)      // not scaleChanged — conflicts with Item.scale built-in
@@ -17,10 +20,6 @@ Item {
   signal enableToggled(bool enabled)    // not enabledChanged — conflicts with Item.enabled built-in
   signal mirrorChanged(string mirrorOf)
 
-  property bool modePickerOpen:   false
-  property bool mirrorPickerOpen: false
-
-  // Close open pickers when the selected monitor changes
   onMonitorChanged: {
     modePickerOpen   = false;
     mirrorPickerOpen = false;
@@ -28,7 +27,6 @@ Item {
     mirrorDropdown.close();
   }
 
-  // ── Mode dropdown overlay ────────────────────────────────────────────────
   Popup {
     id: modeDropdown
     parent: modePill
@@ -38,20 +36,17 @@ Item {
     padding: 1  // background border is drawn inward, so contentItem overlaps it without this
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
 
-    onOpened: panel.modePickerOpen   = true
-    onClosed: panel.modePickerOpen   = false
-
     background: Rectangle {
       radius: 8
-      color: panel.theme.bgSurface
-      border.color: panel.theme.accentPrimary
+      color: root.theme.bgSurface
+      border.color: root.theme.accentPrimary
       border.width: 1
     }
 
     contentItem: ListView {
       id: modeList
       implicitHeight: Math.min(contentHeight + 2, 180)
-      model: panel.monitor?.availableModes ?? []
+      model: root.monitor?.availableModes ?? []
       boundsBehavior: Flickable.StopAtBounds
       clip: true
 
@@ -60,41 +55,43 @@ Item {
         width: modeList.width
         height: 28
         radius: 4
-        color: modelData === (panel.monitor?.selectedMode ?? "") ? panel.theme.accentPrimary : "transparent"
+        color: modelData === (root.monitor?.selectedMode ?? "") ? root.theme.accentPrimary : "transparent"
 
         Row {
-          anchors { fill: parent; leftMargin: 10; rightMargin: 10 }
           spacing: 0
 
+          anchors { fill: parent; leftMargin: 10; rightMargin: 10 }
           Text {
             text: modelData.split("@")[0]
-            color: modelData === (panel.monitor?.selectedMode ?? "") ? panel.theme.bgBase : panel.theme.textPrimary
-            font { pixelSize: 11; family: panel.font }
-            anchors.verticalCenter: parent.verticalCenter
+            color: modelData === (root.monitor?.selectedMode ?? "") ? root.theme.bgBase : root.theme.textPrimary
             width: parent.width - rateText.width
+            anchors.verticalCenter: parent.verticalCenter
+            font { pixelSize: 11; family: root.font }
           }
           Text {
             id: rateText
             text: "@" + (modelData.split("@")[1] ?? "")
-            color: modelData === (panel.monitor?.selectedMode ?? "") ? panel.theme.bgBase : panel.theme.textMuted
-            font { pixelSize: 11; family: panel.font }
+            color: modelData === (root.monitor?.selectedMode ?? "") ? root.theme.bgBase : root.theme.textMuted
             anchors.verticalCenter: parent.verticalCenter
+            font { pixelSize: 11; family: root.font }
           }
         }
 
         MouseArea {
-          anchors.fill: parent
           cursorShape: Qt.PointingHandCursor
+          anchors.fill: parent
           onClicked: {
-            panel.modeSelected(modelData);
+            root.modeSelected(modelData);
             modeDropdown.close();
           }
         }
       }
     }
+    onOpened: root.modePickerOpen   = true
+    onClosed: root.modePickerOpen   = false
+
   }
 
-  // ── Mirror dropdown overlay ──────────────────────────────────────────────
   Popup {
     id: mirrorDropdown
     parent: mirrorPill
@@ -104,13 +101,10 @@ Item {
     padding: 1  // background border is drawn inward, so contentItem overlaps it without this
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
 
-    onOpened: panel.mirrorPickerOpen = true
-    onClosed: panel.mirrorPickerOpen = false
-
     background: Rectangle {
       radius: 8
-      color: panel.theme.bgSurface
-      border.color: panel.theme.accentPrimary
+      color: root.theme.bgSurface
+      border.color: root.theme.accentPrimary
       border.width: 1
     }
 
@@ -118,10 +112,10 @@ Item {
       id: mirrorList
       implicitHeight: Math.min(contentHeight + 2, 150)
       model: {
-        if (panel.monitor === null) return [];
+        if (root.monitor === null) return [];
         const opts = [""];
-        for (const m of panel.allMonitors) {
-          if (m.name !== panel.monitor.name) opts.push(m.name);
+        for (const m of root.allMonitors) {
+          if (m.name !== root.monitor.name) opts.push(m.name);
         }
         return opts;
       }
@@ -133,102 +127,99 @@ Item {
         width: mirrorList.width
         height: 28
         radius: 4
-        color: modelData === (panel.monitor?.mirrorOf ?? "") ? panel.theme.accentPrimary : "transparent"
+        color: modelData === (root.monitor?.mirrorOf ?? "") ? root.theme.accentPrimary : "transparent"
 
         Text {
-          anchors { fill: parent; leftMargin: 10 }
           text: modelData === "" ? "None" : modelData
-          color: modelData === (panel.monitor?.mirrorOf ?? "")
-                 ? panel.theme.bgBase
-                 : (modelData === "" ? panel.theme.textMuted : panel.theme.textPrimary)
-          font { pixelSize: 11; family: panel.font }
+          color: modelData === (root.monitor?.mirrorOf ?? "")
+                 ? root.theme.bgBase
+                 : (modelData === "" ? root.theme.textMuted : root.theme.textPrimary)
           verticalAlignment: Text.AlignVCenter
+          anchors { fill: parent; leftMargin: 10 }
+          font { pixelSize: 11; family: root.font }
         }
 
         MouseArea {
-          anchors.fill: parent
           cursorShape: Qt.PointingHandCursor
+          anchors.fill: parent
           onClicked: {
-            panel.mirrorChanged(modelData);
+            root.mirrorChanged(modelData);
             mirrorDropdown.close();
           }
         }
       }
     }
+    onOpened: root.mirrorPickerOpen = true
+    onClosed: root.mirrorPickerOpen = false
+
   }
 
-  // All children use optional chaining (monitor?.X) so bindings are safe when monitor is null
   ScrollView {
-    anchors.fill: parent
     clip: true
     contentWidth: availableWidth
-    // ScrollView is visible but content guards itself against null monitor
-    visible: panel.monitor !== null
+    visible: root.monitor !== null
 
+    anchors.fill: parent
     ColumnLayout {
-      width: panel.width
+      width: root.width
       spacing: 12
 
-      // Monitor identity
       Text {
+        text: root.monitor?.name ?? ""
+        color: root.theme.textPrimary
         Layout.fillWidth: true
-        text: panel.monitor?.name ?? ""
-        color: panel.theme.textPrimary
-        font { pixelSize: 14; bold: true; family: panel.font }
+        font { pixelSize: 14; bold: true; family: root.font }
       }
       Text {
-        Layout.fillWidth: true
-        text: panel.monitor?.description ?? ""
-        color: panel.theme.textMuted
-        font { pixelSize: 11; family: panel.font }
+        text: root.monitor?.description ?? ""
+        color: root.theme.textMuted
         elide: Text.ElideRight
+        Layout.fillWidth: true
+        font { pixelSize: 11; family: root.font }
       }
 
-      // Divider
-      Divider { color: panel.theme.bgBorder }
+      Divider { color: root.theme.bgBorder }
 
-      // Resolution section
       Text {
         text: "Resolution"
-        color: panel.theme.textSecondary
-        font { pixelSize: 11; family: panel.font }
+        color: root.theme.textSecondary
+        font { pixelSize: 11; family: root.font }
       }
 
-      // Collapsed mode pill
       Rectangle {
         id: modePill
+        radius: 8
+        color: root.theme.bgSurface
         Layout.fillWidth: true
         Layout.preferredHeight: 32
-        radius: 8
-        color: panel.theme.bgSurface
-        border.color: panel.modePickerOpen ? panel.theme.accentPrimary : panel.theme.bgBorder
+        border.color: root.modePickerOpen ? root.theme.accentPrimary : root.theme.bgBorder
         border.width: 1
 
         Row {
-          anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
           spacing: 0
 
+          anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
           Text {
-            text: (panel.monitor?.selectedMode ?? "").replace("Hz", "")
-            color: panel.theme.textPrimary
-            font { pixelSize: 12; family: panel.font }
-            anchors.verticalCenter: parent.verticalCenter
+            text: (root.monitor?.selectedMode ?? "").replace("Hz", "")
+            color: root.theme.textPrimary
             width: parent.width - 20
             elide: Text.ElideRight
+            anchors.verticalCenter: parent.verticalCenter
+            font { pixelSize: 12; family: root.font }
           }
           Text {
-            text: panel.modePickerOpen ? "▴" : "▾"
-            color: panel.theme.textMuted
-            font { pixelSize: 16; family: panel.font }
+            text: root.modePickerOpen ? "▴" : "▾"
+            color: root.theme.textMuted
             anchors.verticalCenter: parent.verticalCenter
+            font { pixelSize: 16; family: root.font }
           }
         }
 
         MouseArea {
-          anchors.fill: parent
           cursorShape: Qt.PointingHandCursor
+          anchors.fill: parent
           onClicked: {
-            if (panel.modePickerOpen) {
+            if (root.modePickerOpen) {
               modeDropdown.close();
             } else {
               mirrorDropdown.close();
@@ -238,53 +229,49 @@ Item {
         }
       }
 
-      // Divider
-      Divider { color: panel.theme.bgBorder }
+      Divider { color: root.theme.bgBorder }
 
-      // Scale section
       Text {
         text: "Scale"
-        color: panel.theme.textSecondary
-        font { pixelSize: 11; family: panel.font }
+        color: root.theme.textSecondary
+        font { pixelSize: 11; family: root.font }
       }
 
       Flow {
-        Layout.fillWidth: true
         spacing: 4
 
+        Layout.fillWidth: true
         Repeater {
           model: [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0]
           Rectangle {
             required property real modelData
             width: 38; height: 26; radius: 6
-            color: Math.abs((panel.monitor?.scale ?? -1) - modelData) < 0.01 ? panel.theme.accentPrimary : panel.theme.bgSurface
-            border.color: panel.theme.bgBorder
+            color: Math.abs((root.monitor?.scale ?? -1) - modelData) < 0.01 ? root.theme.accentPrimary : root.theme.bgSurface
+            border.color: root.theme.bgBorder
             border.width: 1
 
             Text {
-              anchors.centerIn: parent
               text: modelData + "×"
-              color: Math.abs((panel.monitor?.scale ?? -1) - modelData) < 0.01 ? panel.theme.bgBase : panel.theme.textPrimary
-              font { pixelSize: 10; family: panel.font }
+              color: Math.abs((root.monitor?.scale ?? -1) - modelData) < 0.01 ? root.theme.bgBase : root.theme.textPrimary
+              anchors.centerIn: parent
+              font { pixelSize: 10; family: root.font }
             }
 
             MouseArea {
-              anchors.fill: parent
               cursorShape: Qt.PointingHandCursor
-              onClicked: panel.scaleSelected(modelData)
+              anchors.fill: parent
+              onClicked: root.scaleSelected(modelData)
             }
           }
         }
       }
 
-      // Divider
-      Divider { color: panel.theme.bgBorder }
+      Divider { color: root.theme.bgBorder }
 
-      // Rotation section
       Text {
         text: "Rotation"
-        color: panel.theme.textSecondary
-        font { pixelSize: 11; family: panel.font }
+        color: root.theme.textSecondary
+        font { pixelSize: 11; family: root.font }
       }
 
       Row {
@@ -297,85 +284,82 @@ Item {
             { t: 2, label: "180°", icon: "󱃨" },
             { t: 3, label: "270°", icon: "󰑥" },
           ]
-
           Rectangle {
             required property var modelData
             width: 52; height: 26; radius: 6
-            color: (panel.monitor?.transform ?? -1) === modelData.t ? panel.theme.accentPrimary : panel.theme.bgSurface
-            border.color: panel.theme.bgBorder
+            color: (root.monitor?.transform ?? -1) === modelData.t ? root.theme.accentPrimary : root.theme.bgSurface
+            border.color: root.theme.bgBorder
             border.width: 1
 
             Row {
-              anchors.centerIn: parent
               spacing: 4
+              anchors.centerIn: parent
               Text {
                 text: modelData.icon
+                color: (root.monitor?.transform ?? -1) === modelData.t ? root.theme.bgBase : root.theme.textMuted
                 anchors.verticalCenter: parent.verticalCenter
-                color: (panel.monitor?.transform ?? -1) === modelData.t ? panel.theme.bgBase : panel.theme.textMuted
-                font { pixelSize: 13; family: panel.font }
+                font { pixelSize: 13; family: root.font }
               }
               Text {
                 text: modelData.label
+                color: (root.monitor?.transform ?? -1) === modelData.t ? root.theme.bgBase : root.theme.textPrimary
                 anchors.verticalCenter: parent.verticalCenter
-                color: (panel.monitor?.transform ?? -1) === modelData.t ? panel.theme.bgBase : panel.theme.textPrimary
-                font { pixelSize: 10; family: panel.font }
+                font { pixelSize: 10; family: root.font }
               }
             }
 
             MouseArea {
-              anchors.fill: parent
               cursorShape: Qt.PointingHandCursor
-              onClicked: panel.transformChanged(modelData.t)
+              anchors.fill: parent
+              onClicked: root.transformChanged(modelData.t)
             }
           }
+
         }
       }
 
-      // Divider
-      Divider { color: panel.theme.bgBorder }
+      Divider { color: root.theme.bgBorder }
 
-      // Mirror section
       Text {
         text: "Mirror of"
-        color: panel.theme.textSecondary
-        font { pixelSize: 11; family: panel.font }
+        color: root.theme.textSecondary
+        font { pixelSize: 11; family: root.font }
       }
 
-      // Mirror collapsed pill
       Rectangle {
         id: mirrorPill
+        radius: 8
+        color: root.theme.bgSurface
         Layout.fillWidth: true
         Layout.preferredHeight: 32
-        radius: 8
-        color: panel.theme.bgSurface
-        border.color: panel.mirrorPickerOpen ? panel.theme.accentPrimary : panel.theme.bgBorder
+        border.color: root.mirrorPickerOpen ? root.theme.accentPrimary : root.theme.bgBorder
         border.width: 1
 
         Row {
-          anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
           spacing: 0
 
+          anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
           Text {
-            text: (panel.monitor?.mirrorOf ?? "") === "" ? "None" : (panel.monitor?.mirrorOf ?? "")
-            color: (panel.monitor?.mirrorOf ?? "") === "" ? panel.theme.textMuted : panel.theme.textPrimary
-            font { pixelSize: 12; family: panel.font }
-            anchors.verticalCenter: parent.verticalCenter
+            text: (root.monitor?.mirrorOf ?? "") === "" ? "None" : (root.monitor?.mirrorOf ?? "")
+            color: (root.monitor?.mirrorOf ?? "") === "" ? root.theme.textMuted : root.theme.textPrimary
             width: parent.width - 20
             elide: Text.ElideRight
+            anchors.verticalCenter: parent.verticalCenter
+            font { pixelSize: 12; family: root.font }
           }
           Text {
-            text: panel.mirrorPickerOpen ? "▴" : "▾"
-            color: panel.theme.textMuted
-            font { pixelSize: 16; family: panel.font }
+            text: root.mirrorPickerOpen ? "▴" : "▾"
+            color: root.theme.textMuted
             anchors.verticalCenter: parent.verticalCenter
+            font { pixelSize: 16; family: root.font }
           }
         }
 
         MouseArea {
-          anchors.fill: parent
           cursorShape: Qt.PointingHandCursor
+          anchors.fill: parent
           onClicked: {
-            if (panel.mirrorPickerOpen) {
+            if (root.mirrorPickerOpen) {
               mirrorDropdown.close();
             } else {
               modeDropdown.close();
@@ -385,46 +369,63 @@ Item {
         }
       }
 
-      // Divider
-      Divider { color: panel.theme.bgBorder }
+      Divider { color: root.theme.bgBorder }
 
-      // Enable / Disable toggle
       Rectangle {
+        radius: 8
+        color: (root.monitor?.disabled ?? true) ? root.theme.bgSurface : root.theme.accentGreen
         Layout.fillWidth: true
         Layout.preferredHeight: 32
-        radius: 8
-        color: (panel.monitor?.disabled ?? true) ? panel.theme.bgSurface : panel.theme.accentGreen
-        border.color: panel.theme.bgBorder
+        border.color: root.theme.bgBorder
         border.width: 1
 
         Row {
-          anchors.centerIn: parent
           spacing: 8
+          anchors.centerIn: parent
           Text {
-            text: (panel.monitor?.disabled ?? true) ? "" : ""
+            text: (root.monitor?.disabled ?? true) ? "" : ""
+            color: (root.monitor?.disabled ?? true) ? root.theme.textMuted : root.theme.bgBase
             anchors.verticalCenter: parent.verticalCenter
-            color: (panel.monitor?.disabled ?? true) ? panel.theme.textMuted : panel.theme.bgBase
-            font { pixelSize: 14; family: panel.font }
+            font { pixelSize: 14; family: root.font }
           }
           Text {
-            text: (panel.monitor?.disabled ?? true) ? "Disabled" : "Enabled"
+            text: (root.monitor?.disabled ?? true) ? "Disabled" : "Enabled"
+            color: (root.monitor?.disabled ?? true) ? root.theme.textMuted : root.theme.bgBase
             anchors.verticalCenter: parent.verticalCenter
-            color: (panel.monitor?.disabled ?? true) ? panel.theme.textMuted : panel.theme.bgBase
-            font { pixelSize: 12; bold: true; family: panel.font }
+            font { pixelSize: 12; bold: true; family: root.font }
           }
         }
 
         MouseArea {
-          anchors.fill: parent
           cursorShape: Qt.PointingHandCursor
+          anchors.fill: parent
           onClicked: {
-            if (panel.monitor !== null) panel.enableToggled(panel.monitor.disabled);
+            if (root.monitor !== null) root.enableToggled(root.monitor.disabled);
           }
         }
       }
 
-      // Bottom spacer
       Item { Layout.preferredHeight: 8 }
+      // Monitor identity
+      // Divider
+      // Resolution section
+      // Collapsed mode pill
+      // Divider
+      // Scale section
+      // Divider
+      // Rotation section
+      // Divider
+      // Mirror section
+      // Mirror collapsed pill
+      // Divider
+      // Enable / Disable toggle
+      // Bottom spacer
     }
+    // ScrollView is visible but content guards itself against null monitor
   }
+  // Not required — intentionally null when no monitor is selected
+  // Close open pickers when the selected monitor changes
+  // ── Mode dropdown overlay ────────────────────────────────────────────────
+  // ── Mirror dropdown overlay ──────────────────────────────────────────────
+  // All children use optional chaining (monitor?.X) so bindings are safe when monitor is null
 }

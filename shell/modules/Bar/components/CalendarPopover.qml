@@ -1,22 +1,22 @@
-import Quickshell
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
+import Quickshell
 import qs.modules.Bar.services
+import qs.config
+
+pragma ComponentBehavior: Bound
 
 PopupWindow {
   id: root
 
-  required property var anchorItem
-  required property var theme
+  required property Item anchorItem
+  required property Theme theme
   required property string font
   property int displayYear: ClockService.currentYear
   property int displayMonth: ClockService.currentMonth
   property var calendarLocale: Qt.locale()
-  readonly property var mondayFirstLocale: Qt.locale("en_GB")
-  readonly property string monthTitle: qsTr("%1 %2")
-    .arg(root.calendarLocale.standaloneMonthName(root.displayMonth + 1, Locale.LongFormat))
-    .arg(root.displayYear)
+  property bool closeSignalSent: false
 
   signal closedByUser()
 
@@ -26,81 +26,73 @@ PopupWindow {
   implicitWidth: 300
   implicitHeight: 372
 
-  anchor.item: anchorItem
-  anchor.edges: Edges.Bottom | Edges.Right
-  anchor.gravity: Edges.Bottom | Edges.Left
-  anchor.adjustment: PopupAdjustment.All
-
   onVisibleChanged: {
     if (visible) {
+      closeSignalSent = false;
       showToday();
       previousButton.forceActiveFocus();
     } else {
-      closedByUser();
+      emitClosedByUser();
     }
   }
-  onClosed: closedByUser()
+  onClosed: emitClosedByUser()
 
-  function closePopover() {
-    visible = false;
-  }
-
-  function showToday() {
-    displayYear = ClockService.currentYear;
-    displayMonth = ClockService.currentMonth;
-  }
-
-  function changeMonth(offset) {
-    const month = new Date(displayYear, displayMonth + offset, 1);
-    displayYear = month.getFullYear();
-    displayMonth = month.getMonth();
+  anchor {
+    item: anchorItem
+    edges: Edges.Bottom | Edges.Right
+    gravity: Edges.Bottom | Edges.Left
+    adjustment: PopupAdjustment.All
   }
 
   Rectangle {
     id: panel
-    anchors.fill: parent
     color: root.theme.bgBase
-    border.color: root.theme.bgBorder
-    border.width: 1
     radius: 10
     activeFocusOnTab: true
 
+    anchors.fill: parent
+    border.color: root.theme.bgBorder
+    border.width: 1
     Keys.onEscapePressed: event => {
       root.closePopover();
       event.accepted = true;
     }
 
     ColumnLayout {
-      anchors.fill: parent
-      anchors.margins: 12
       spacing: 8
 
+      anchors.fill: parent
+      anchors.margins: 12
       Text {
-        Layout.fillWidth: true
-        Layout.preferredHeight: 44
         text: ClockService.timeWithSecondsString
         color: root.theme.textPrimary
-        font.family: root.font
-        font.pixelSize: 32
-        font.bold: true
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
+        Layout.fillWidth: true
+        Layout.preferredHeight: 44
         Accessible.role: Accessible.StaticText
         Accessible.name: qsTr("Current time: %1").arg(text)
+        font {
+          family: root.font
+          pixelSize: 32
+          bold: true
+        }
       }
 
       RowLayout {
-        Layout.fillWidth: true
         spacing: 6
 
+        Layout.fillWidth: true
         Text {
-          Layout.fillWidth: true
           text: root.monthTitle
           color: root.theme.textPrimary
-          font.family: root.font
-          font.pixelSize: 15
-          font.bold: true
           elide: Text.ElideRight
+          Layout.fillWidth: true
+          font {
+            family: root.font
+            pixelSize: 15
+            bold: true
+          }
         }
 
         CalendarHeaderButton {
@@ -142,8 +134,6 @@ PopupWindow {
 
       DayOfWeekRow {
         id: weekHeader
-        Layout.fillWidth: true
-        Layout.preferredHeight: 24
         locale: root.mondayFirstLocale
         spacing: 4
 
@@ -154,17 +144,17 @@ PopupWindow {
           height: 24
           text: root.calendarLocale.dayName(day, Locale.ShortFormat)
           color: root.theme.textMuted
-          font.family: root.font
-          font.pixelSize: 11
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
+          font.family: root.font
+          font.pixelSize: 11
         }
+        Layout.fillWidth: true
+        Layout.preferredHeight: 24
       }
 
       MonthGrid {
         id: monthGrid
-        Layout.fillWidth: true
-        Layout.fillHeight: true
         month: root.displayMonth
         year: root.displayYear
         locale: root.mondayFirstLocale
@@ -173,28 +163,57 @@ PopupWindow {
 
         delegate: Rectangle {
           required property var model
-          readonly property bool inCurrentMonth: model.month === monthGrid.month
-          readonly property bool isToday: model.year === ClockService.currentYear
-            && model.month === ClockService.currentMonth
-            && model.day === ClockService.currentDay
-
           width: (monthGrid.availableWidth - monthGrid.spacing * 6) / 7
           height: (monthGrid.availableHeight - monthGrid.spacing * 5) / 6
           color: isToday ? root.theme.accentPrimary : "transparent"
           radius: Math.min(width, height) / 2
 
           Text {
-            anchors.centerIn: parent
             text: model.day
             color: parent.isToday
               ? root.theme.bgBase
               : parent.inCurrentMonth ? root.theme.textPrimary : root.theme.textMuted
-            font.family: root.font
-            font.pixelSize: 12
-            font.bold: parent.isToday
+          font {
+            family: root.font
+            pixelSize: 12
+            bold: parent.isToday
           }
+            anchors.centerIn: parent
+          }
+          readonly property bool inCurrentMonth: model.month === monthGrid.month
+          readonly property bool isToday: model.year === ClockService.currentYear
+            && model.month === ClockService.currentMonth
+            && model.day === ClockService.currentDay
+
         }
+        Layout.fillWidth: true
+        Layout.fillHeight: true
       }
     }
   }
+  function emitClosedByUser() {
+    if (closeSignalSent) return;
+    closeSignalSent = true;
+    closedByUser();
+  }
+
+  function closePopover() {
+    closedByUser();
+  }
+
+  function showToday() {
+    displayYear = ClockService.currentYear;
+    displayMonth = ClockService.currentMonth;
+  }
+
+  function changeMonth(offset) {
+    const month = new Date(displayYear, displayMonth + offset, 1);
+    displayYear = month.getFullYear();
+    displayMonth = month.getMonth();
+  }
+
+  readonly property var mondayFirstLocale: Qt.locale("en_GB")
+  readonly property string monthTitle: qsTr("%1 %2")
+    .arg(root.calendarLocale.standaloneMonthName(root.displayMonth + 1, Locale.LongFormat))
+    .arg(root.displayYear)
 }

@@ -1,11 +1,12 @@
 import QtQuick
+import qs.config
 
 // Generic clickable button (icon glyph, text label, or both) with hover highlight.
 // Root is Rectangle so callers can set border.color / border.width directly.
 Rectangle {
     id: root
 
-    required property var   theme
+    required property Theme theme
     required property string font
 
     property string icon:       ""

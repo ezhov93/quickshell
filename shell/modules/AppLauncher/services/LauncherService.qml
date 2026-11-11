@@ -3,7 +3,7 @@ pragma Singleton
 import Quickshell
 
 Singleton {
-  readonly property var entries: indexEntries(DesktopEntries.applications.values)
+  id: root
 
   function indexEntries(applications) {
     return applications.map(entry => ({
@@ -31,4 +31,6 @@ Singleton {
     entry.execute();
     return true;
   }
+  readonly property list<var> entries: indexEntries(DesktopEntries.applications.values)
+
 }

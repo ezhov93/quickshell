@@ -1,8 +1,8 @@
 pragma Singleton
 
+import QtQuick
 import Quickshell
 import Quickshell.Io
-import QtQuick
 import qs.config
 
 Singleton {
@@ -12,9 +12,49 @@ Singleton {
   property bool ready: false
   property string device: ""
   property int queuedSteps: 0
-  readonly property bool available: ready && maximum > 0
   signal updated()
 
+  Component.onCompleted: discovery.scan(["/sys/class/backlight"])
+
+  DirectoryScanner {
+    id: discovery
+    onFinished: entries => {
+      const entry = entries.find(e => e.isDir);
+      root.device = entry?.name ?? "";
+    }
+  }
+  FileView {
+    id: maximumFile
+    path: root.device ? "/sys/class/backlight/" + root.device + "/max_brightness" : ""
+    blockLoading: false
+    printErrors: false
+    onLoaded: { root.maximum = Number(text().trim()); brightnessFile.reload(); }
+    onLoadFailed: { root.maximum = 0; root.ready = false; }
+  }
+  FileView {
+    id: brightnessFile
+    path: root.device ? "/sys/class/backlight/" + root.device + "/brightness" : ""
+    blockLoading: false
+    printErrors: false
+    watchChanges: true
+    onFileChanged: reload()
+    onLoaded: root.updateValue()
+    onLoadFailed: root.ready = false
+  }
+  Timer {
+    interval: Config.brightnessPollInterval
+    repeat: true
+    running: root.device !== ""
+    onTriggered: brightnessFile.reload()
+  }
+  Process {
+    id: setProcess
+    onExited: (exitCode, exitStatus) => {
+      if (exitCode !== 0 || exitStatus !== 0) console.warn("Could not change brightness");
+      brightnessFile.reload();
+      Qt.callLater(root.applyQueued);
+    }
+  }
   function adjust(increase) {
     if (!available) return;
     queuedSteps += increase ? 1 : -1;
@@ -37,46 +77,6 @@ Singleton {
     if (changed) updated();
   }
 
-  DirectoryScanner {
-    id: discovery
-    onFinished: entries => {
-      const entry = entries.find(e => e.isDir);
-      root.device = entry?.name ?? "";
-    }
-  }
-  Component.onCompleted: discovery.scan(["/sys/class/backlight"])
-
-  FileView {
-    id: maximumFile
-    path: root.device ? "/sys/class/backlight/" + root.device + "/max_brightness" : ""
-    blockLoading: false
-    printErrors: false
-    onLoaded: { root.maximum = Number(text().trim()); brightnessFile.reload(); }
-    onLoadFailed: { root.maximum = 0; root.ready = false; }
-  }
-  FileView {
-    id: brightnessFile
-    path: root.device ? "/sys/class/backlight/" + root.device + "/brightness" : ""
-    blockLoading: false
-    printErrors: false
-    watchChanges: true
-    onFileChanged: reload()
-    onLoaded: root.updateValue()
-    onLoadFailed: root.ready = false
-  }
+  readonly property bool available: ready && maximum > 0
   // sysfs does not reliably emit filesystem notifications for external changes.
-  Timer {
-    interval: Config.brightnessPollInterval
-    repeat: true
-    running: root.device !== ""
-    onTriggered: brightnessFile.reload()
-  }
-  Process {
-    id: setProcess
-    onExited: (exitCode, exitStatus) => {
-      if (exitCode !== 0 || exitStatus !== 0) console.warn("Could not change brightness");
-      brightnessFile.reload();
-      Qt.callLater(root.applyQueued);
-    }
-  }
 }

@@ -1,23 +1,19 @@
-import qs.config
-import qs.components
-import qs.modules.Wallpaper.services
-import Quickshell
-import Quickshell.Wayland
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Wayland
+import qs.components
+import qs.config
+import qs.modules.Wallpaper.services
 
 PanelWindow {
   id: root
-  required property var theme
+  required property Theme theme
   property string font: Config.fontFamily
-  signal closeRequested()
-  onVisibleChanged: if (!visible) previewPath = ""
-  Component.onCompleted: searchInput.forceActiveFocus()
-
   property string searchText: ""
   property string previewPath: ""
 
-  property var filteredWallpapers: {
+  property list<var> filteredWallpapers: {
     const q = searchText.toLowerCase();
     if (q === "") return WallpaperService.wallpapers;
     return WallpaperService.wallpapers.filter(p => {
@@ -26,15 +22,21 @@ PanelWindow {
     });
   }
 
+  signal closeRequested()
   visible: true
   focusable: true
   color: "transparent"
 
-  WlrLayershell.layer: WlrLayer.Overlay
-  WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-  WlrLayershell.namespace: "quickshell-wallpaper"
-
   exclusionMode: ExclusionMode.Ignore
+
+  onVisibleChanged: if (!visible) previewPath = ""
+  Component.onCompleted: searchInput.forceActiveFocus()
+
+  WlrLayershell {
+    layer: WlrLayer.Overlay
+    keyboardFocus: WlrKeyboardFocus.Exclusive
+    namespace: "quickshell-wallpaper"
+  }
 
   anchors {
     top: true
@@ -43,24 +45,22 @@ PanelWindow {
     right: true
   }
 
-  // Dark overlay backdrop
   MouseArea {
     anchors.fill: parent
     onClicked: root.closeRequested()
 
     Rectangle {
-      anchors.fill: parent
       color: root.theme.bgOverlay
+      anchors.fill: parent
     }
   }
 
-  // Main wallpaper picker box
   Rectangle {
-    anchors.centerIn: parent
     width: 720
     height: 560
     radius: 16
     color: root.theme.bgBase
+    anchors.centerIn: parent
     border.color: root.theme.bgBorder
     border.width: 1
 
@@ -70,15 +70,14 @@ PanelWindow {
     }
 
     ColumnLayout {
-      anchors.fill: parent
-      anchors.margins: 16
       spacing: 12
 
-      // Header
+      anchors.fill: parent
+      anchors.margins: 16
       RowLayout {
-        Layout.fillWidth: true
         spacing: 12
 
+        Layout.fillWidth: true
         Text {
           text: "󰸉  Wallpaper"
           color: root.theme.accentPrimary
@@ -98,83 +97,80 @@ PanelWindow {
           font.family: root.font
         }
 
-        // Refresh button
         Rectangle {
-          Layout.preferredWidth: 28
-          Layout.preferredHeight: 28
           radius: 14
           color: refreshHover.containsMouse ? root.theme.bgHover : "transparent"
+          Layout.preferredWidth: 28
+          Layout.preferredHeight: 28
           Accessible.role: Accessible.Button
           Accessible.name: "Refresh wallpaper list"
 
           Text {
-            anchors.centerIn: parent
             text: "󰑐"
             color: root.theme.textMuted
+            anchors.centerIn: parent
             font.pixelSize: 14
             font.family: root.font
           }
 
           MouseArea {
             id: refreshHover
-            anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
+            anchors.fill: parent
             onClicked: WallpaperService.rescan()
           }
         }
+        // Refresh button
       }
 
       Text {
-        Layout.fillWidth: true
         text: WallpaperService.applyError.trim()
         visible: text !== ""
         color: root.theme.accentRed
         wrapMode: Text.Wrap
+        Layout.fillWidth: true
         font.family: root.font
         font.pixelSize: 11
       }
 
-      // Search
       Rectangle {
-        Layout.fillWidth: true
-        Layout.preferredHeight: 36
         radius: 8
         color: root.theme.bgSurface
+        Layout.fillWidth: true
+        Layout.preferredHeight: 36
         border.color: searchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
         border.width: 1
 
         RowLayout {
+          spacing: 8
+
           anchors {
             fill: parent
             leftMargin: 10
             rightMargin: 10
           }
-          spacing: 8
-
           Text {
             text: ""
             color: root.theme.textMuted
+            Layout.alignment: Qt.AlignVCenter
             font {
               pixelSize: 13
               family: root.font
             }
-            Layout.alignment: Qt.AlignVCenter
           }
 
           TextInput {
             id: searchInput
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
             color: root.theme.textPrimary
-            font.pixelSize: 13
-            font.family: root.font
             clip: true
             selectByMouse: true
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
+            font.pixelSize: 13
+            font.family: root.font
             Accessible.role: Accessible.EditableText
             Accessible.name: "Search wallpapers"
-            onTextChanged: root.searchText = text
-
             Keys.onEscapePressed: {
               if (root.previewPath !== "") {
                 root.previewPath = "";
@@ -182,23 +178,22 @@ PanelWindow {
                 root.closeRequested();
               }
             }
+            onTextChanged: root.searchText = text
+
           }
 
           Text {
             text: "Search wallpapers..."
             color: root.theme.textMuted
+            visible: searchInput.text === "" && !searchInput.activeFocus
             font.pixelSize: 13
             font.family: root.font
-            visible: searchInput.text === "" && !searchInput.activeFocus
           }
         }
       }
 
-      // Wallpaper grid
       GridView {
         id: wallpaperGrid
-        Layout.fillWidth: true
-        Layout.fillHeight: true
         cellWidth: Math.floor(width / 4)
         cellHeight: cellWidth * 0.6 + 8
         clip: true
@@ -215,23 +210,24 @@ PanelWindow {
           onApplyRequested: path => WallpaperService.setWallpaper(path)
         }
 
-        // Empty state
+        Layout.fillWidth: true
+        Layout.fillHeight: true
         Text {
-          anchors.centerIn: parent
           text: "󰋩  No wallpapers found\nAdd images to ~/Pictures/Wallpapers/"
           color: root.theme.textMuted
-          font.pixelSize: 13
-          font.family: root.font
           horizontalAlignment: Text.AlignHCenter
           visible: wallpaperGrid.count === 0
+          anchors.centerIn: parent
+          font.pixelSize: 13
+          font.family: root.font
         }
+        // Empty state
       }
 
-      // Footer
       RowLayout {
-        Layout.fillWidth: true
         spacing: 16
 
+        Layout.fillWidth: true
         ShortcutHint {
           theme: root.theme
           font: root.font
@@ -253,10 +249,13 @@ PanelWindow {
 
         Item { Layout.fillWidth: true }
       }
+      // Header
+      // Search
+      // Wallpaper grid
+      // Footer
     }
   }
 
-  // Preview overlay
   WallpaperPreview {
     theme: root.theme
     font: root.font
@@ -264,4 +263,7 @@ PanelWindow {
     onCloseRequested: root.previewPath = ""
     onApplyRequested: path => WallpaperService.setWallpaper(path)
   }
+  // Dark overlay backdrop
+  // Main wallpaper picker box
+  // Preview overlay
 }

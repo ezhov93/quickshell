@@ -1,10 +1,12 @@
 import QtQuick
+import Quickshell.Hyprland
+import qs.config
 import qs.modules.Bar.services
 
 Row {
   id: root
 
-  required property var theme
+  required property Theme theme
   required property string font
 
   spacing: 4
@@ -15,7 +17,7 @@ Row {
     BarButton {
       id: workspaceButton
 
-      required property var modelData
+      required property HyprlandWorkspace modelData
       property bool urgentBlink: false
 
       theme: root.theme
@@ -30,6 +32,7 @@ Row {
         .arg(modelData.id)
         .arg(modelData.focused ? qsTr(", active") : "")
         .arg(modelData.urgent ? qsTr(", urgent") : "")
+      onClicked: WorkspaceService.activateWorkspace(workspaceButton.modelData)
 
       Behavior on color {
         ColorAnimation { duration: 150 }
@@ -39,26 +42,24 @@ Row {
         loops: Animation.Infinite
         running: workspaceButton.modelData.urgent && !workspaceButton.modelData.focused
 
+        onStopped: workspaceButton.urgentBlink = false
         PropertyAction { target: workspaceButton; property: "urgentBlink"; value: true }
         PauseAnimation { duration: 500 }
         PropertyAction { target: workspaceButton; property: "urgentBlink"; value: false }
         PauseAnimation { duration: 500 }
 
-        onStopped: workspaceButton.urgentBlink = false
       }
 
       Text {
-        anchors.centerIn: parent
         text: workspaceButton.modelData.id
         color: workspaceButton.modelData.focused ? root.theme.bgBase : root.theme.textPrimary
+        anchors.centerIn: parent
         font {
           pixelSize: 11
           family: root.font
           bold: workspaceButton.modelData.focused
         }
       }
-
-      onClicked: WorkspaceService.activateWorkspace(workspaceButton.modelData)
 
       Behavior on width {
         NumberAnimation { duration: 150 }

@@ -1,15 +1,15 @@
-import qs.config
-import qs.components
-import qs.modules.MonitorManager.components
-import qs.modules.MonitorManager.services
-import Quickshell
-import Quickshell.Wayland
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Wayland
+import qs.components
+import qs.config
+import qs.modules.MonitorManager.components
+import qs.modules.MonitorManager.services
 
 PanelWindow {
   id: root
-  required property var theme
+  required property Theme theme
   required property MonitorEditorState editor
   property string font: Config.fontFamily
 
@@ -17,9 +17,11 @@ PanelWindow {
   focusable: true
   color: "transparent"
 
-  WlrLayershell.layer: WlrLayer.Overlay
-  WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-  WlrLayershell.namespace: "quickshell-monitors"
+  WlrLayershell {
+    layer: WlrLayer.Overlay
+    keyboardFocus: WlrKeyboardFocus.Exclusive
+    namespace: "quickshell-monitors"
+  }
 
   exclusionMode: ExclusionMode.Ignore
 

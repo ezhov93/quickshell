@@ -1,12 +1,12 @@
+import Quickshell
+import Quickshell.Io
 import qs.config
 import qs.modules.AppLauncher.components
 import qs.modules.AppLauncher.services
-import Quickshell
-import Quickshell.Io
 
 Scope {
   id: root
-  property var theme: Theme
+  property Theme theme: Theme
   property string font: Config.fontFamily
   property bool isOpen: false
   IpcHandler {

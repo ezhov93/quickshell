@@ -4,6 +4,8 @@ import Quickshell
 import Quickshell.Services.UPower
 
 Singleton {
+  id: root
+
   readonly property var device: UPower.displayDevice
   readonly property bool available: device && device.isLaptopBattery && device.isPresent
   readonly property real charge: available ? device.percentage : NaN

@@ -137,6 +137,8 @@ modBind("O", hl.dsp.exec_cmd("qs ipc call monitors toggle"))
 modBind("SHIFT + O", hl.dsp.exec_cmd("qs ipc call monitors refresh"))
 
 hl.window_rule({
+    -- Используется только явно запущенным fallback nmtui; popover Quickshell
+    -- не создаёт отдельное окно и от этого правила не зависит.
     name = "float-nmtui",
     match = { class = "^lpde-nmtui$" },
     float = true,

@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 
 Rectangle {
-    Layout.fillWidth: true
+    id: root
+
     height: 1
+    Layout.fillWidth: true
 }

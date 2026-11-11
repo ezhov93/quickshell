@@ -1,27 +1,16 @@
 pragma Singleton
 
-import Quickshell
-import Quickshell.Io
-import Quickshell.Hyprland
 import QtQuick
+import Quickshell
+import Quickshell.Hyprland
+import Quickshell.Io
 import qs.config
 
 Singleton {
   id: root
   property string socketPath: Hyprland.requestSocketPath
-  property var queue: []
+  property list<var> queue: []
   property var current: null
-
-  function request(command, callback) {
-    queue.push({ command: command, callback: callback });
-    next();
-  }
-  function next() {
-    if (current || queue.length === 0) return;
-    const task = queue.shift();
-    current = jobComponent.createObject(root, { command: task.command, callback: task.callback });
-    current.start();
-  }
 
   Component {
     id: jobComponent
@@ -32,23 +21,6 @@ Singleton {
       property bool finished: false
       property bool sent: false
 
-      function start() {
-        if (!root.socketPath) { finish("", "Hyprland socket is unavailable"); return; }
-        timeout.start();
-        socket.connected = true;
-      }
-      function finish(reply, error) {
-        if (finished) return;
-        finished = true;
-        timeout.stop();
-        socket.connected = false;
-        try { callback(reply, error); }
-        finally {
-          root.current = null;
-          job.destroy();
-          Qt.callLater(root.next);
-        }
-      }
       Socket {
         id: socket
         path: root.socketPath
@@ -72,6 +44,35 @@ Singleton {
         interval: Config.monitorApplyVerifyTimeout
         onTriggered: job.finish("", "Hyprland request timed out")
       }
+      function start() {
+        if (!root.socketPath) { finish("", "Hyprland socket is unavailable"); return; }
+        timeout.start();
+        socket.connected = true;
+      }
+      function finish(reply, error) {
+        try { callback(reply, error); }
+        finally {
+          root.current = null;
+          job.destroy();
+          Qt.callLater(root.next);
+        }
+        if (finished) return;
+        finished = true;
+        timeout.stop();
+        socket.connected = false;
+      }
     }
   }
+  function request(command, callback) {
+    queue = queue.concat([{ command: command, callback: callback }]);
+    next();
+  }
+  function next() {
+    if (current || queue.length === 0) return;
+    const task = queue[0];
+    queue = queue.slice(1);
+    current = jobComponent.createObject(root, { command: task.command, callback: task.callback });
+    current.start();
+  }
+
 }

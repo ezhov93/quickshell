@@ -21,11 +21,11 @@ BarPill {
 
   readonly property MouseArea inputArea: MouseArea {
     parent: root
-    anchors.fill: parent
     z: 1
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
     acceptedButtons: Qt.LeftButton
+    anchors.fill: parent
     onClicked: root.clicked()
     onWheel: (wheel) => {
       if (wheel.angleDelta.y > 0) root.wheelUp();

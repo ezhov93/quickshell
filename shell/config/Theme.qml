@@ -4,6 +4,8 @@ import QtQuick
 
 // Nordic GTK / Nord palette: https://github.com/EliverLara/Nordic
 QtObject {
+  id: root
+
   readonly property color bgBase: "#2e3440"
   readonly property color bgSurface: "#3b4252"
   readonly property color bgOverlay: "#88000000"

@@ -13,6 +13,10 @@ KeyboardLayoutWidget 1.0 KeyboardLayoutWidget.qml
 MediaWidget 1.0 MediaWidget.qml
 MemoryWidget 1.0 MemoryWidget.qml
 NetworkWidget 1.0 NetworkWidget.qml
+NetworkPopover 1.0 NetworkPopover.qml
+NetworkPasswordDialog 1.0 NetworkPasswordDialog.qml
+NetworkRow 1.0 NetworkRow.qml
+NetworkSection 1.0 NetworkSection.qml
 TemperatureWidget 1.0 TemperatureWidget.qml
 TrayWidget 1.0 TrayWidget.qml
 VolumeWidget 1.0 VolumeWidget.qml

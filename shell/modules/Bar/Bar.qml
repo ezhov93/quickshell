@@ -1,14 +1,14 @@
+import QtQuick
+import Quickshell
+import Quickshell.Io
 import qs.config
 import qs.modules.Bar.components
 import qs.modules.Bar.services
-import Quickshell
-import Quickshell.Io
-import QtQuick
 
 Scope {
   id: root
 
-  property var theme: Theme
+  property Theme theme: Theme
   property string font: Config.fontFamily
   property bool barVisible: true
 

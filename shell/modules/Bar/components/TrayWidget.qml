@@ -11,15 +11,16 @@ BarPill {
 
   RowLayout {
     id: trayIcons
-    anchors.centerIn: parent
     spacing: 2
 
+    anchors.centerIn: parent
     Repeater {
       model: TrayService.items
 
       MouseArea {
         id: trayDelegate
         required property var modelData
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
 
         Accessible.role: Accessible.Button
         Accessible.name: modelData.tooltipTitle || modelData.title || "System tray item"
@@ -27,24 +28,22 @@ BarPill {
         Layout.preferredWidth: 24
         Layout.preferredHeight: 24
 
-        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-
         onClicked: (mouse) => {
           if (mouse.button === Qt.LeftButton) {
-            TrayService.activateItem(modelData)
-          } else if (mouse.button === Qt.RightButton) {
             if (modelData.hasMenu) {
               menuAnchor.open()
             }
           } else if (mouse.button === Qt.MiddleButton) {
+            TrayService.activateItem(modelData)
+          } else if (mouse.button === Qt.RightButton) {
             TrayService.secondaryActivateItem(modelData)
           }
         }
 
         IconImage {
-          anchors.centerIn: parent
           source: trayDelegate.modelData.icon
           implicitSize: 16
+          anchors.centerIn: parent
         }
 
         QsMenuAnchor {
@@ -54,8 +53,7 @@ BarPill {
           anchor.window: trayDelegate.QsWindow.window
           anchor.adjustment: PopupAdjustment.Flip
           anchor.onAnchoring: {
-            const window = trayDelegate.QsWindow.window;
-            const widgetRect = window.contentItem.mapFromItem(
+            const widgetRect = trayDelegate.QsWindow.contentItem.mapFromItem(
               trayDelegate, 0, trayDelegate.height,
               trayDelegate.width, trayDelegate.height);
             menuAnchor.anchor.rect = widgetRect;

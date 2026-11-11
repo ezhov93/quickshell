@@ -12,14 +12,16 @@ BarButton {
     if (sink.audio.muted) return "Volume: muted";
     return "Volume: " + Math.round(sink.audio.volume * 100) + "%";
   }
+  onClicked: Audio.toggleMute()
+  onWheelUp: Audio.adjust(true)
+  onWheelDown: Audio.adjust(false)
 
   Row {
     id: volContent
-    anchors.centerIn: parent
     spacing: 6
 
+    anchors.centerIn: parent
     Text {
-      anchors.verticalCenter: parent.verticalCenter
       text: {
         const sink = Audio.sink;
         if (!sink || !sink.audio || sink.audio.muted || sink.audio.volume <= 0) return "󰖁";
@@ -32,12 +34,12 @@ BarButton {
         if (!sink || !sink.audio || sink.audio.muted) return root.theme.textMuted;
         return root.theme.accentPrimary;
       }
+      anchors.verticalCenter: parent.verticalCenter
       font.pixelSize: 14
       font.family: root.font
     }
 
     Text {
-      anchors.verticalCenter: parent.verticalCenter
       text: {
         const sink = Audio.sink;
         if (!sink || !sink.audio) return "–";
@@ -45,12 +47,10 @@ BarButton {
         return Math.round(sink.audio.volume * 100) + "%";
       }
       color: root.theme.textPrimary
+      anchors.verticalCenter: parent.verticalCenter
       font.pixelSize: 11
       font.family: root.font
     }
   }
 
-  onClicked: Audio.toggleMute()
-  onWheelUp: Audio.adjust(true)
-  onWheelDown: Audio.adjust(false)
 }

@@ -1,11 +1,13 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell
+import qs.config
 
 ListView {
   id: root
 
-  required property var theme
+  required property Theme theme
   required property string font
   required property var entriesModel
   required property int selectedIndex
@@ -41,7 +43,7 @@ ListView {
   }
 
   delegate: LauncherEntry {
-    required property var modelData
+    required property DesktopEntry modelData
     required property int index
 
     width: root.width
@@ -56,12 +58,12 @@ ListView {
   }
 
   Text {
-    anchors.centerIn: parent
     text: "  No applications found"
     color: root.theme.textMuted
+    visible: root.count === 0 && root.query !== ""
+    anchors.centerIn: parent
     font.pixelSize: 14
     font.family: root.font
-    visible: root.count === 0 && root.query !== ""
   }
 
   function positionSelected(index): void {

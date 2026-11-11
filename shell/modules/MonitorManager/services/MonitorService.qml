@@ -1,22 +1,21 @@
 pragma Singleton
 
-import Quickshell
-import Quickshell.Io
-import Quickshell.Hyprland
 import QtQuick
+import Quickshell
+import Quickshell.Hyprland
+import Quickshell.Io
 import qs.config
 import qs.services
 
 Singleton {
   id: root
-  property var monitors: []
+  property list<var> monitors: []
   property bool loading: false
   property bool applying: false
   property bool saving: false
   property bool persistenceAvailable: false
-  readonly property string configFormat: Hyprland.usingLua ? "lua" : "conf"
   property string configDirectory: Config.monitorConfigDirectory
-  property var _lastEdits: []
+  property list<var> _lastEdits: []
   property bool _pendingVerify: false
   property bool refreshPending: false
   property string queryError: ""
@@ -25,6 +24,38 @@ Singleton {
   signal applyDone(bool hasErrors, string errorText)
   signal persistDone(bool hasErrors, string errorText)
 
+  TextFileWriter {
+    id: savedConfig
+    onCompleted: (success, error) => {
+      root.saving = false;
+      root.persistDone(!success, success ? "" : "Display settings applied, but could not save: " + error);
+    }
+  }
+  FileView {
+    id: sourceConfig
+    path: root.configDirectory + "/hyprland." + root.configFormat
+    blockLoading: false
+    printErrors: false
+    watchChanges: true
+    onFileChanged: reload()
+    onLoaded: {
+      const content = text().split("\n").filter(line => !line.trim().startsWith(root.configFormat === "lua" ? "--" : "#")).join("\n");
+      root.persistenceAvailable = root.configFormat === "lua"
+        ? /require\s*\(?\s*["']monitors["']/.test(content)
+        : /^\s*source\s*=.*monitors\.conf\s*(?:#.*)?$/m.test(content);
+    }
+    onLoadFailed: root.persistenceAvailable = false
+  }
+  Timer { id: refreshDebounce; interval: Config.monitorRefreshDebounce; onTriggered: root._doRefresh() }
+  Connections {
+    target: Hyprland
+    function onRawEvent(event) {
+      if (["monitoradded", "monitorremoved", "configreloaded"].includes(event.name)) {
+        if (event.name === "configreloaded") sourceConfig.reload();
+        root.refresh();
+      }
+    }
+  }
   function findCurrentMode(m) {
     const target      = `${m.width}x${m.height}`;
     const rateRounded = Math.round(m.refreshRate);
@@ -37,8 +68,6 @@ Singleton {
       ?? `${m.width}x${m.height}@${m.refreshRate.toFixed(2)}Hz`;
   }
 
-  // Themes core: builds one monitor line with a caller-supplied prefix
-  // ("keyword monitor " for hyprctl, "monitor=" for monitors.conf)
   function buildMonitorLine(m, prefix) {
     if (m.disabled) return `${prefix}${m.name},disable`;
     const parsed = MonitorUtils.parseMode(m.selectedMode);
@@ -60,7 +89,6 @@ Singleton {
     return lines.join("\n") + "\n";
   }
 
-  // Lua equivalent of buildMonitorLine/buildFileContent, used when hyprland.lua is active.
   function buildMonitorLuaLine(m) {
     if (m.disabled) return `hl.monitor({ output = ${JSON.stringify(m.name)}, disabled = true })`;
     const parsed = MonitorUtils.parseMode(m.selectedMode);
@@ -167,36 +195,8 @@ Singleton {
       configFormat === "lua" ? buildFileContentLua(edits) : buildFileContent(edits));
   }
 
-  TextFileWriter {
-    id: savedConfig
-    onCompleted: (success, error) => {
-      root.saving = false;
-      root.persistDone(!success, success ? "" : "Display settings applied, but could not save: " + error);
-    }
-  }
-  FileView {
-    id: sourceConfig
-    path: root.configDirectory + "/hyprland." + root.configFormat
-    blockLoading: false
-    printErrors: false
-    watchChanges: true
-    onFileChanged: reload()
-    onLoaded: {
-      const content = text().split("\n").filter(line => !line.trim().startsWith(root.configFormat === "lua" ? "--" : "#")).join("\n");
-      root.persistenceAvailable = root.configFormat === "lua"
-        ? /require\s*\(?\s*["']monitors["']/.test(content)
-        : /^\s*source\s*=.*monitors\.conf\s*(?:#.*)?$/m.test(content);
-    }
-    onLoadFailed: root.persistenceAvailable = false
-  }
-  Timer { id: refreshDebounce; interval: Config.monitorRefreshDebounce; onTriggered: root._doRefresh() }
-  Connections {
-    target: Hyprland
-    function onRawEvent(event) {
-      if (["monitoradded", "monitorremoved", "configreloaded"].includes(event.name)) {
-        if (event.name === "configreloaded") sourceConfig.reload();
-        root.refresh();
-      }
-    }
-  }
+  readonly property string configFormat: Hyprland.usingLua ? "lua" : "conf"
+  // Themes core: builds one monitor line with a caller-supplied prefix
+  // ("keyword monitor " for hyprctl, "monitor=" for monitors.conf)
+  // Lua equivalent of buildMonitorLine/buildFileContent, used when hyprland.lua is active.
 }

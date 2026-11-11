@@ -1,8 +1,15 @@
 import QtQuick
+import Quickshell
 import qs.modules.Bar.services
 
 BarButton {
   id: root
+  property bool popoverOpen: false
+
+  width: content.width + 12
+  Accessible.name: qsTr("Network: %1").arg(root.networkName)
+  Accessible.description: qsTr("Open Wi-Fi network menu")
+  onClicked: root.popoverOpen = !root.popoverOpen
 
   readonly property string networkIcon: {
     if (NetworkService.type === "ethernet") return "󰈀";
@@ -16,23 +23,29 @@ BarButton {
     return NetworkService.type;
   }
 
-  width: content.width + 12
-  Accessible.name: qsTr("Network: %1").arg(root.networkName)
-  Accessible.description: qsTr("Open network settings (nmtui)")
-
   Row {
     id: content
-    anchors.centerIn: parent
     spacing: 6
 
+    anchors.centerIn: parent
     Text {
-      anchors.verticalCenter: parent.verticalCenter
       text: root.networkIcon
       color: NetworkService.type === "disconnected" ? root.theme.textMuted : root.theme.accentGreen
+      anchors.verticalCenter: parent.verticalCenter
       font.pixelSize: 14
       font.family: root.font
     }
   }
 
-  onClicked: NetworkService.openSettings()
+  LazyLoader {
+    id: popoverLoader
+    active: root.popoverOpen
+    component: NetworkPopover {
+      anchorItem: root
+      theme: root.theme
+      font: root.font
+      visible: root.popoverOpen
+      onClosedByUser: root.popoverOpen = false
+    }
+  }
 }

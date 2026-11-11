@@ -1,15 +1,15 @@
 pragma ComponentBehavior: Bound
 
+import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import QtQuick
 
 import qs.config
 
 PanelWindow {
   id: root
 
-  required property var theme
+  required property Theme theme
   property string font: Config.fontFamily
 
   signal closeRequested()
@@ -18,12 +18,13 @@ PanelWindow {
   visible: true
   focusable: true
   color: "transparent"
-
-  WlrLayershell.layer: WlrLayer.Overlay
-  WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-  WlrLayershell.namespace: "quickshell-launcher"
-
   exclusionMode: ExclusionMode.Ignore
+
+  WlrLayershell {
+    layer: WlrLayer.Overlay
+    keyboardFocus: WlrKeyboardFocus.Exclusive
+    namespace: "quickshell-launcher"
+  }
 
   anchors {
     top: true
@@ -37,15 +38,15 @@ PanelWindow {
     onClicked: root.closeRequested()
 
     Rectangle {
-      anchors.fill: parent
       color: root.theme.bgOverlay
+      anchors.fill: parent
     }
   }
 
   LauncherPanel {
-    anchors.centerIn: parent
     theme: root.theme
     font: root.font
+    anchors.centerIn: parent
     onCloseRequested: root.closeRequested()
     onLaunchRequested: entry => root.launchRequested(entry)
   }

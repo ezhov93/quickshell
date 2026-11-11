@@ -1,5 +1,5 @@
-import qs.services
 import QtQuick
+import qs.services
 
 BarButton {
   id: root
@@ -8,29 +8,29 @@ BarButton {
 
   Accessible.role: Accessible.StaticText
   Accessible.name: "Brightness: " + Math.round(Brightness.value * 100) + "%"
+  onWheelUp: Brightness.adjust(true)
+  onWheelDown: Brightness.adjust(false)
 
   Row {
     id: brightContent
-    anchors.centerIn: parent
     spacing: 6
 
+    anchors.centerIn: parent
     Text {
-      anchors.verticalCenter: parent.verticalCenter
       text: "󰃠"
       color: root.theme.accentOrange
+      anchors.verticalCenter: parent.verticalCenter
       font.pixelSize: 14
       font.family: root.font
     }
 
     Text {
-      anchors.verticalCenter: parent.verticalCenter
       text: Math.round(Brightness.value * 100) + "%"
       color: root.theme.textPrimary
+      anchors.verticalCenter: parent.verticalCenter
       font.pixelSize: 11
       font.family: root.font
     }
   }
 
-  onWheelUp: Brightness.adjust(true)
-  onWheelDown: Brightness.adjust(false)
 }

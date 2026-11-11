@@ -1,17 +1,18 @@
 import QtQuick
+import qs.config
 
 Rectangle {
   id: root
 
-  required property var theme
+  required property Theme theme
   required property string font
+  default property alias contentData: content.data
+
   property color baseColor: root.theme.bgSurface
   property color hoverColor: root.theme.bgHover
   property bool hovered: false
   property int horizontalPadding: 6
   property int verticalPadding: 0
-
-  default property alias contentData: content.data
 
   implicitWidth: content.childrenRect.width + horizontalPadding * 2
   implicitHeight: 24
@@ -28,4 +29,5 @@ Rectangle {
       bottomMargin: root.verticalPadding
     }
   }
+
 }

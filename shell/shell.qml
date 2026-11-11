@@ -4,9 +4,8 @@
 //@ pragma Env QSG_RENDER_LOOP=threaded
 //@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
 
-import Quickshell
-import Quickshell.Io
 import QtQuick
+import Quickshell
 
 import qs.modules.Bar
 import qs.modules.AppLauncher
@@ -17,6 +16,8 @@ import qs.modules.MonitorManager
 import qs.modules.IdleInhibitor
 
 Scope {
+  id: root
+
   Bar {}
   AppLauncher {}
   Notifications {}

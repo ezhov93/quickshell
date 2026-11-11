@@ -1,79 +1,79 @@
 import QtQuick
+import qs.config
 
 Rectangle {
   id: root
-  required property var theme
+  required property Theme theme
   required property string font
   required property string previewPath
   signal closeRequested()
   signal applyRequested(string path)
 
-  anchors.fill: parent
   color: Qt.rgba(0, 0, 0, 0.85)
   visible: root.previewPath !== ""
 
+  anchors.fill: parent
   MouseArea {
     anchors.fill: parent
     onClicked: root.closeRequested()
   }
 
   Image {
-    anchors.centerIn: parent
     width: parent.width * 0.8
     height: parent.height * 0.8
     source: root.previewPath !== "" ? "file://" + root.previewPath.split("/").map(encodeURIComponent).join("/") : ""
-    sourceSize.width: Math.ceil(width)
-    sourceSize.height: Math.ceil(height)
     cache: false
     fillMode: Image.PreserveAspectFit
     asynchronous: true
+    anchors.centerIn: parent
+    sourceSize.width: Math.ceil(width)
+    sourceSize.height: Math.ceil(height)
   }
 
-  // Apply button
   Rectangle {
-    anchors {
-      bottom: parent.bottom
-      horizontalCenter: parent.horizontalCenter
-      bottomMargin: 40
-    }
     width: applyRow.width + 32
     height: 40
     radius: 20
     color: root.theme.accentPrimary
     Accessible.role: Accessible.Button
     Accessible.name: "Apply wallpaper"
-
+    anchors {
+      bottom: parent.bottom
+      horizontalCenter: parent.horizontalCenter
+      bottomMargin: 40
+    }
     Row {
       id: applyRow
-      anchors.centerIn: parent
       spacing: 8
 
+      anchors.centerIn: parent
       Text {
         text: ""
         color: root.theme.bgBase
+        anchors.verticalCenter: parent.verticalCenter
         font.pixelSize: 14
         font.family: root.font
-        anchors.verticalCenter: parent.verticalCenter
       }
       Text {
         text: "Apply Wallpaper"
         color: root.theme.bgBase
+        anchors.verticalCenter: parent.verticalCenter
         font {
           pixelSize: 13
           family: root.font
           bold: true
         }
-        anchors.verticalCenter: parent.verticalCenter
       }
     }
 
     MouseArea {
-      anchors.fill: parent
       cursorShape: Qt.PointingHandCursor
+      anchors.fill: parent
       onClicked: {
         root.applyRequested(root.previewPath);
         root.closeRequested();
       }
     }
   }
+  // Apply button
 }

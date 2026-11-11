@@ -1,23 +1,23 @@
-import Quickshell
 import QtQuick
+import Quickshell
+import qs.config
 
 PanelWindow {
   id: root
 
-  required property var modelData
-  required property var theme
+  required property ShellScreen modelData
+  required property Theme theme
   required property string font
 
   screen: modelData
+  implicitHeight: 32
+  color: root.theme.bgBase
 
   anchors {
     top: true
     left: true
     right: true
   }
-
-  implicitHeight: 32
-  color: root.theme.bgBase
 
   Item {
     anchors {
@@ -28,10 +28,10 @@ PanelWindow {
 
     Row {
       id: leftSection
-      anchors.left: parent.left
-      anchors.verticalCenter: parent.verticalCenter
       spacing: 8
 
+      anchors.left: parent.left
+      anchors.verticalCenter: parent.verticalCenter
       WorkspaceSwitcher {
         theme: root.theme
         font: root.font
@@ -39,23 +39,23 @@ PanelWindow {
     }
 
     ActiveWindowWidget {
+      height: parent.height
+      theme: root.theme
+      font: root.font
       anchors {
         left: leftSection.right
         right: rightSection.left
         leftMargin: 12
         rightMargin: 12
       }
-      height: parent.height
-      theme: root.theme
-      font: root.font
     }
 
     Row {
       id: rightSection
-      anchors.right: parent.right
-      anchors.verticalCenter: parent.verticalCenter
       spacing: 8
 
+      anchors.right: parent.right
+      anchors.verticalCenter: parent.verticalCenter
       TrayWidget {
         theme: root.theme
         font: root.font

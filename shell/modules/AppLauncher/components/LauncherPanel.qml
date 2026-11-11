@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 
-import Quickshell
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 
 import qs.components
 import qs.config
@@ -11,14 +11,10 @@ import qs.modules.AppLauncher.services
 Rectangle {
   id: root
 
-  required property var theme
+  required property Theme theme
   property string font: Config.fontFamily
   property alias query: searchInput.text
   property int selectedIndex: -1
-  readonly property int resultCount: filteredApps.values.length
-  readonly property bool searchHasFocus: searchInput.activeFocus
-  readonly property var searchResults: LauncherService.search(searchInput.text)
-
   signal closeRequested()
   signal launchRequested(var entry)
 
@@ -39,10 +35,10 @@ Rectangle {
   }
 
   ColumnLayout {
-    anchors.fill: parent
-    anchors.margins: 16
     spacing: 12
 
+    anchors.fill: parent
+    anchors.margins: 16
     Text {
       text: "  Applications"
       color: root.theme.accentPrimary
@@ -54,25 +50,25 @@ Rectangle {
     }
 
     Rectangle {
-      Layout.fillWidth: true
-      Layout.preferredHeight: 44
       radius: 10
       color: root.theme.bgSurface
       border.color: searchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
       border.width: 1
+      Layout.fillWidth: true
+      Layout.preferredHeight: 44
 
       Behavior on border.color {
         ColorAnimation { duration: 150 }
       }
 
       RowLayout {
+        spacing: 10
+
         anchors {
           fill: parent
           leftMargin: 14
           rightMargin: 14
         }
-        spacing: 10
-
         Text {
           text: ""
           color: root.theme.textMuted
@@ -83,27 +79,27 @@ Rectangle {
 
         TextInput {
           id: searchInput
-          Layout.fillWidth: true
-          Layout.alignment: Qt.AlignVCenter
           color: root.theme.textPrimary
-          font.pixelSize: 15
-          font.family: root.font
           clip: true
           focus: true
+          font.pixelSize: 15
+          font.family: root.font
+          Layout.fillWidth: true
+          Layout.alignment: Qt.AlignVCenter
           Accessible.role: Accessible.EditableText
           Accessible.name: "Search applications"
 
+          Keys.onPressed: event => root.handleKey(event)
+          onTextChanged: root.resetSelectionForQuery()
           Text {
-            anchors.fill: parent
             text: "Type to search..."
             color: root.theme.textMuted
             font: parent.font
             visible: !parent.text && !parent.activeFocus
             verticalAlignment: Text.AlignVCenter
+            anchors.fill: parent
           }
 
-          onTextChanged: root.resetSelectionForQuery()
-          Keys.onPressed: event => root.handleKey(event)
         }
       }
     }
@@ -117,21 +113,21 @@ Rectangle {
 
     LauncherResults {
       id: results
-      Layout.fillWidth: true
-      Layout.fillHeight: true
       theme: root.theme
       font: root.font
       entriesModel: filteredApps
       selectedIndex: root.selectedIndex
       query: searchInput.text
+      Layout.fillWidth: true
+      Layout.fillHeight: true
       onActivated: entry => root.launchRequested(entry)
       onHovered: index => root.selectIndex(index)
     }
 
     RowLayout {
-      Layout.fillWidth: true
       spacing: 16
 
+      Layout.fillWidth: true
       ShortcutHint {
         theme: root.theme
         font: root.font
@@ -202,4 +198,8 @@ Rectangle {
       root.closeRequested();
     }
   }
+  readonly property int resultCount: filteredApps.values.length
+  readonly property bool searchHasFocus: searchInput.activeFocus
+  readonly property var searchResults: LauncherService.search(searchInput.text)
+
 }

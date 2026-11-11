@@ -4,9 +4,10 @@ import qs.modules.Bar.services
 BarPill {
   id: root
 
-  readonly property string valueText: Number.isFinite(BatteryService.charge)
-    ? Math.round(BatteryService.charge * 100) + "%"
-    : "N/A"
+  visible: BatteryService.available
+  width: content.width + 12
+  Accessible.role: Accessible.StaticText
+  Accessible.name: qsTr("Battery: %1").arg(root.valueText)
 
   readonly property string batteryIcon: {
     if (BatteryService.charging) return "";
@@ -23,30 +24,29 @@ BarPill {
     return root.theme.batteryCritical;
   }
 
-  visible: BatteryService.available
-  width: content.width + 12
-  Accessible.role: Accessible.StaticText
-  Accessible.name: qsTr("Battery: %1").arg(root.valueText)
-
   Row {
     id: content
-    anchors.centerIn: parent
     spacing: 6
 
+    anchors.centerIn: parent
     Text {
-      anchors.verticalCenter: parent.verticalCenter
       text: root.batteryIcon
       color: root.batteryColor
+      anchors.verticalCenter: parent.verticalCenter
       font.pixelSize: 14
       font.family: root.font
     }
 
     Text {
-      anchors.verticalCenter: parent.verticalCenter
       text: root.valueText
       color: root.theme.textPrimary
+      anchors.verticalCenter: parent.verticalCenter
       font.pixelSize: 11
       font.family: root.font
     }
   }
+  readonly property string valueText: Number.isFinite(BatteryService.charge)
+    ? Math.round(BatteryService.charge * 100) + "%"
+    : "N/A"
+
 }

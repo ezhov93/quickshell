@@ -1,9 +1,10 @@
 import QtQuick
+import qs.config
 
 Row {
   id: root
 
-  required property var theme
+  required property Theme theme
   required property string font
   required property string shortcut
   required property string description
@@ -18,20 +19,20 @@ Row {
 
     Text {
       id: shortcutText
-      anchors.centerIn: parent
       text: root.shortcut
       textFormat: Text.PlainText
       color: root.theme.textMuted
+      anchors.centerIn: parent
       font.pixelSize: 10
       font.family: root.font
     }
   }
 
   Text {
-    anchors.verticalCenter: parent.verticalCenter
     text: root.description
     textFormat: Text.PlainText
     color: root.theme.textMuted
+    anchors.verticalCenter: parent.verticalCenter
     font.pixelSize: 10
     font.family: root.font
   }

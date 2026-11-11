@@ -4,7 +4,10 @@ import QtQuick
 import Quickshell
 
 QtObject {
+  id: root
+
   readonly property string fontFamily: "Hack Nerd Font"
+  // Explicit fallback for VPN, Enterprise Wi-Fi, and unsupported operations.
   readonly property list<string> networkSettingsCommand: ["foot", "--app-id=lpde-nmtui", "-o", "main.pad=0x0", "-e", "nmtui"]
 
   readonly property int resourceCpuInterval: 2000

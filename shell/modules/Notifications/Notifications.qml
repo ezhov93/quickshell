@@ -1,15 +1,15 @@
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
+import Quickshell.Wayland
 import qs.config
 import qs.modules.Notifications.components
 import qs.modules.Notifications.services
-import Quickshell
-import Quickshell.Wayland
-import Quickshell.Io
-import QtQuick
-import QtQuick.Layouts
 
 Scope {
     id: root
-    property var theme: Theme
+    property Theme theme: Theme
     property string font: Config.fontFamily
 
     IpcHandler {
@@ -29,7 +29,7 @@ Scope {
 
         LazyLoader {
             id: notificationLoader
-            required property var modelData
+            required property ShellScreen modelData
             active: NotificationService.notifications.length > 0
 
             PanelWindow {
@@ -39,9 +39,11 @@ Scope {
                 focusable: false
                 color: "transparent"
 
-                WlrLayershell.layer: WlrLayer.Overlay
-                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-                WlrLayershell.namespace: "quickshell-notifications"
+                WlrLayershell {
+                    layer: WlrLayer.Overlay
+                    keyboardFocus: WlrKeyboardFocus.None
+                    namespace: "quickshell-notifications"
+                }
 
                 exclusionMode: ExclusionMode.Ignore
                 anchors {
@@ -65,7 +67,7 @@ Scope {
 
                     Repeater {
                         model: ScriptModel {
-                            values: NotificationService.notifications
+                            values: NotificationService.notifications.map(notification => notification)
                             objectProp: "seqId"
                         }
 
